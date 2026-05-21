@@ -725,6 +725,29 @@ function renderStageBody(m,calc,grade){
     });
     html+=`</div></div>`;
   } else {
+    // idle placeholder characters
+    const idleChars=[{type:'p1',icon:'⚔️',lbl:'戰士',clr:'#F97316'},{type:'p2',icon:'🔮',lbl:'法師',clr:'#6366F1'}];
+    let idleHtml=`<div class="sv-sec"><div class="sv-sec-title">🎮 玩家個人進度</div><div class="players-grid">`;
+    idleChars.forEach(c=>{
+      idleHtml+=`
+      <div class="pcard ${c.type}" style="opacity:0.65">
+        <div class="speech-bubble" style="background:#e2e8f0;color:#64748b;border-color:#cbd5e1">等待任務中… 💤</div>
+        <div class="char-figure">
+          <div class="char-hat ${c.type}-hat"></div>
+          <div class="char-head">${c.icon}</div>
+          <div class="char-body ${c.type}-body"></div>
+          <div class="char-arms"></div>
+          <div class="char-legs"></div>
+        </div>
+        <div class="pcard-name">${c.lbl}</div>
+        <div class="pcard-track" style="position:relative">
+          <div class="pcard-fill" style="width:0%"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:4px">上傳業績後解鎖</div>
+      </div>`;
+    });
+    idleHtml+=`</div></div>`;
+    html+=idleHtml;
     html+=`
       <div class="sv-sec">
         <div class="nodata">
