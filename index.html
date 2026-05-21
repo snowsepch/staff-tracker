@@ -1,1286 +1,763 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎮 門市闖關儀表板</title>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --bg: #080c18;
-      --surface: #0f1424;
-      --surface2: #161c30;
-      --surface3: #1c2338;
-      --border: #252d45;
-      --border2: #2e3a58;
-      --text: #dce6ff;
-      --text-muted: #7a8db0;
-      --gold: #FFD700;
-      --gold2: #FF8C00;
-      --green: #00E676;
-      --blue: #42A5F5;
-      --purple: #CE93D8;
-      --orange: #FF9800;
-      --red: #EF5350;
-      --cyan: #26C6DA;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, 'SF Pro Display', 'PingFang TC', 'Noto Sans TC', sans-serif;
-      min-height: 100vh;
-      background-image:
-        radial-gradient(ellipse at 10% 20%, rgba(255,165,0,0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 90% 80%, rgba(66,165,245,0.04) 0%, transparent 50%);
-    }
-
-    /* ─── HEADER ─── */
-    .header {
-      background: rgba(15,20,36,0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 200;
-    }
-
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand-icon {
-      font-size: 26px;
-      line-height: 1;
-    }
-
-    .brand-text h1 {
-      font-size: 17px;
-      font-weight: 800;
-      background: linear-gradient(90deg, var(--gold), var(--gold2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 0.02em;
-    }
-
-    .brand-text p {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 1px;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .year-select {
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      outline: none;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border2);
-      color: var(--text-muted);
-    }
-    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--gold2), var(--gold));
-      color: #000;
-    }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,165,0,0.35); }
-
-    .file-input { display: none; }
-
-    /* ─── MAIN ─── */
-    .main {
-      padding: 24px;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    /* ─── ANNUAL SUMMARY ─── */
-    .annual-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
-      display: grid;
-      grid-template-columns: repeat(3, auto) 1fr;
-      gap: 0;
-      align-items: center;
-    }
-
-    .stat-block {
-      text-align: center;
-      padding: 0 24px;
-      border-right: 1px solid var(--border);
-    }
-    .stat-block:last-of-type { border-right: none; }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--gold);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      letter-spacing: 0.03em;
-    }
-
-    .metrics-summary {
-      padding-left: 24px;
-    }
-
-    .metrics-summary-title {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .mini-rows {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px 16px;
-    }
-
-    .mini-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .mini-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      width: 52px;
-      flex-shrink: 0;
-    }
-
-    .mini-bar {
-      flex: 1;
-      height: 5px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .mini-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .mini-val {
-      font-size: 11px;
-      color: var(--text);
-      width: 34px;
-      text-align: right;
-      flex-shrink: 0;
-      font-weight: 600;
-    }
-
-    /* ─── MAP ─── */
-    .map-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .map-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 0% 100%, rgba(255,165,0,0.04) 0%, transparent 45%),
-        radial-gradient(circle at 100% 0%, rgba(66,165,245,0.04) 0%, transparent 45%);
-      pointer-events: none;
-    }
-
-    .map-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-    }
-
-    .map-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .map-hint {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* Stage grid */
-    .stage-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      position: relative;
-    }
-
-    /* Connector lines via pseudo after each node (except last in row) */
-    .stage-node {
-      background: var(--surface2);
-      border: 2px solid var(--border2);
-      border-radius: 14px;
-      padding: 14px 10px 12px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      position: relative;
-      user-select: none;
-    }
-
-    .stage-node.locked {
-      opacity: 0.45;
-      cursor: default;
-    }
-
-    .stage-node.locked:hover { transform: none; }
-
-    .stage-node.grade-s {
-      border-color: var(--gold);
-      background: linear-gradient(135deg, #150f00, #1e1500);
-    }
-    .stage-node.grade-s:hover { box-shadow: 0 6px 24px rgba(255,215,0,0.25); transform: translateY(-3px); }
-
-    .stage-node.grade-a {
-      border-color: var(--green);
-      background: linear-gradient(135deg, #001a0d, #002616);
-    }
-    .stage-node.grade-a:hover { box-shadow: 0 6px 24px rgba(0,230,118,0.2); transform: translateY(-3px); }
-
-    .stage-node.grade-b {
-      border-color: var(--blue);
-      background: linear-gradient(135deg, #001533, #00204d);
-    }
-    .stage-node.grade-b:hover { box-shadow: 0 6px 24px rgba(66,165,245,0.2); transform: translateY(-3px); }
-
-    .stage-node.grade-c {
-      border-color: var(--orange);
-      background: linear-gradient(135deg, #150900, #201300);
-    }
-    .stage-node.grade-c:hover { box-shadow: 0 6px 24px rgba(255,152,0,0.2); transform: translateY(-3px); }
-
-    .stage-node.grade-d {
-      border-color: var(--red);
-      background: linear-gradient(135deg, #150000, #200000);
-    }
-    .stage-node.grade-d:hover { box-shadow: 0 6px 24px rgba(239,83,80,0.2); transform: translateY(-3px); }
-
-    .stage-node.grade-active {
-      border-color: var(--orange);
-      background: linear-gradient(135deg, #150900, #201300);
-      animation: pulse-stage 2.5s ease-in-out infinite;
-    }
-    .stage-node.grade-active:hover { box-shadow: 0 6px 24px rgba(255,152,0,0.3); transform: translateY(-3px); }
-
-    @keyframes pulse-stage {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255,152,0,0.25); }
-      50% { box-shadow: 0 0 0 10px rgba(255,152,0,0); }
-    }
-
-    .stage-seq {
-      font-size: 10px;
-      color: var(--text-muted);
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
-    }
-
-    .stage-icon-wrap {
-      font-size: 26px;
-      line-height: 1;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .stage-month-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-
-    .stage-pct {
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1;
-      margin-bottom: 5px;
-    }
-
-    .stage-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 99px;
-      letter-spacing: 0.04em;
-    }
-
-    .bg-s  { background: rgba(255,215,0,0.12); color: var(--gold); }
-    .bg-a  { background: rgba(0,230,118,0.12); color: var(--green); }
-    .bg-b  { background: rgba(66,165,245,0.12); color: var(--blue); }
-    .bg-c  { background: rgba(255,152,0,0.12); color: var(--orange); }
-    .bg-d  { background: rgba(239,83,80,0.12); color: var(--red); }
-    .bg-active { background: rgba(255,152,0,0.12); color: var(--orange); }
-    .bg-locked { background: rgba(100,100,100,0.1); color: #555; }
-
-    .text-s  { color: var(--gold); }
-    .text-a  { color: var(--green); }
-    .text-b  { color: var(--blue); }
-    .text-c  { color: var(--orange); }
-    .text-d  { color: var(--red); }
-    .text-muted-dim { color: var(--text-muted); }
-
-    /* ─── LEGEND ─── */
-    .legend {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* ─── MODAL ─── */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(6px);
-      z-index: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s;
-    }
-
-    .overlay.open {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 700px;
-      max-height: 92vh;
-      overflow-y: auto;
-      transform: scale(0.96) translateY(16px);
-      transition: transform 0.25s;
-    }
-
-    .overlay.open .modal {
-      transform: scale(1) translateY(0);
-    }
-
-    .modal-head {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: var(--surface);
-      border-radius: 20px 20px 0 0;
-      z-index: 10;
-    }
-
-    .modal-head-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .modal-icon { font-size: 24px; }
-
-    .modal-month-name {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    .modal-close-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-    }
-    .modal-close-btn:hover { border-color: var(--red); color: var(--red); }
-
-    .modal-body { padding: 20px 24px 24px; }
-
-    .section-head {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 12px;
-    }
-
-    /* Overall achievement row */
-    .overall-bar-row {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .overall-pct-big {
-      font-size: 36px;
-      font-weight: 900;
-      line-height: 1;
-      min-width: 80px;
-    }
-
-    .overall-info {
-      flex: 1;
-    }
-
-    .overall-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    .overall-bar-track {
-      height: 8px;
-      background: var(--border);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .overall-bar-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Metric cards grid */
-    .metric-cards {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-
-    .metric-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
-    }
-
-    .mc-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .mc-name {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .mc-pct {
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .mc-values {
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-
-    .mc-actual {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    .mc-unit {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .mc-target {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-left: auto;
-    }
-
-    .mc-bar-track {
-      height: 5px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .mc-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Staff section */
-    .staff-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-      gap: 10px;
-    }
-
-    .staff-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 12px;
-      cursor: default;
-      transition: border-color 0.2s;
-    }
-
-    .staff-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold2), var(--gold));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 800;
-      color: #000;
-      margin-bottom: 8px;
-    }
-
-    .staff-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-
-    .staff-contrib {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-
-    .staff-stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px 8px;
-    }
-
-    .staff-stat-item {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .staff-stat-item b {
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    /* No data state */
-    .no-data {
-      text-align: center;
-      padding: 40px 16px;
-    }
-
-    .no-data-icon { font-size: 44px; margin-bottom: 12px; }
-
-    .no-data h3 {
-      font-size: 16px;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-
-    .no-data p {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 500;
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      z-index: 9999;
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.ok  { border-color: var(--green); color: var(--green); }
-    .toast.err { border-color: var(--red); color: var(--red); }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-    /* Responsive */
-    @media (max-width: 700px) {
-      .stage-grid { grid-template-columns: repeat(3, 1fr); }
-      .annual-card { grid-template-columns: repeat(2, 1fr); }
-      .metric-cards { grid-template-columns: 1fr; }
-      .metrics-summary { grid-column: 1 / -1; padding-left: 0; padding-top: 16px; }
-      .stat-block { border-right: none; border-bottom: 1px solid var(--border); padding: 12px 0; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 門市闖關儀表板</title>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #ECF0FF;
+  --card: #FFFFFF;
+  --card2: #F4F7FF;
+  --border: #DDE4F5;
+  --text: #1A2240;
+  --text2: #3A4870;
+  --muted: #7A8DB0;
+  --shadow: 0 2px 14px rgba(50,80,180,.08);
+  --shadow-lg: 0 8px 32px rgba(50,80,180,.13);
+  --gold:#F59E0B; --gold2:#FBBF24;
+  --green:#10B981; --green2:#34D399;
+  --blue:#3B82F6; --blue2:#60A5FA;
+  --orange:#F97316; --orange2:#FB923C;
+  --red:#EF4444;   --red2:#F87171;
+  --purple:#8B5CF6;
+  --cyan:#06B6D4;
+  --path:#C7D2F0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','PingFang TC',sans-serif;min-height:100vh;}
+
+/* ── HEADER ── */
+.hdr{background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.hdr-brand{display:flex;align-items:center;gap:10px;}
+.hdr-icon{font-size:26px;}
+.hdr-title{font-size:17px;font-weight:900;color:var(--text);letter-spacing:-.02em;}
+.hdr-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.year-sel{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);cursor:pointer;outline:none;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;white-space:nowrap;}
+.btn-target{background:#EDE9FE;color:var(--purple);border:1.5px solid #C4B5FD;}
+.btn-target:hover{background:#DDD6FE;}
+.btn-upload{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;}
+.btn-upload:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,158,11,.35);}
+.btn-dl{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+.btn-dl:hover{color:var(--blue);border-color:var(--blue);}
+.file-inp{display:none;}
+
+/* ── MAIN ── */
+.main{max-width:1120px;margin:0 auto;padding:24px;}
+
+/* ── SUMMARY CARD ── */
+.sum-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 28px;display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:0;align-items:center;margin-bottom:18px;}
+.stat-col{text-align:center;padding:0 28px;border-right:1px solid var(--border);}
+.stat-col:first-child{padding-left:0;}
+.stat-col:last-of-type{border-right:none;}
+.stat-num{font-size:36px;font-weight:900;color:var(--gold);line-height:1;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+.mini-wrap{padding-left:28px;}
+.mini-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;}
+.mini-row{display:flex;align-items:center;gap:6px;}
+.mini-lbl{font-size:11px;color:var(--muted);width:52px;flex-shrink:0;}
+.mini-trk{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.mini-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+.mini-val{font-size:11px;font-weight:700;color:var(--text2);width:34px;text-align:right;}
+
+/* ── MAP CARD ── */
+.map-card{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);padding:28px 28px 24px;position:relative;overflow:hidden;}
+.map-card::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1.2' fill='%23D0D8F0' fill-opacity='.55'/%3E%3C/svg%3E");pointer-events:none;}
+.map-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;position:relative;}
+.map-ttl{font-size:16px;font-weight:900;color:var(--text);display:flex;align-items:center;gap:8px;}
+.map-hint{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* Stage world wrapper - position relative so SVG path can overlay */
+.stage-world{position:relative;}
+.stage-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 12px;position:relative;z-index:1;}
+
+/* ── STAGE NODE ── */
+.snode{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;border-radius:16px;padding:4px 2px;transition:transform .2s;position:relative;}
+.snode:hover:not(.locked){transform:translateY(-5px);}
+.snode.locked{cursor:default;opacity:.45;}
+
+/* The orb */
+.orb{width:80px;height:80px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;transition:box-shadow .2s;border:3px solid transparent;}
+.orb-s {background:linear-gradient(145deg,#FBBF24,#F59E0B);border-color:#D97706;color:#fff;}
+.orb-a {background:linear-gradient(145deg,#34D399,#10B981);border-color:#059669;color:#fff;}
+.orb-b {background:linear-gradient(145deg,#60A5FA,#3B82F6);border-color:#2563EB;color:#fff;}
+.orb-c {background:linear-gradient(145deg,#FB923C,#F97316);border-color:#EA580C;color:#fff;}
+.orb-d {background:linear-gradient(145deg,#F87171,#EF4444);border-color:#DC2626;color:#fff;}
+.orb-active{background:linear-gradient(145deg,#FEF3C7,#FDE68A);border-color:var(--orange);color:var(--orange);animation:orb-pulse 2.2s ease-in-out infinite;}
+.orb-locked{background:linear-gradient(145deg,#F1F5F9,#E2E8F0);border-color:#CBD5E1;color:#94A3B8;}
+
+.snode:hover:not(.locked) .orb{box-shadow:0 8px 28px rgba(0,0,0,.18);}
+.orb-s:hover,.orb-s.h{box-shadow:0 8px 28px rgba(245,158,11,.45)!important;}
+.orb-a:hover,.orb-a.h{box-shadow:0 8px 28px rgba(16,185,129,.4)!important;}
+.orb-b:hover,.orb-b.h{box-shadow:0 8px 28px rgba(59,130,246,.4)!important;}
+.orb-c:hover,.orb-c.h{box-shadow:0 8px 28px rgba(249,115,22,.4)!important;}
+.orb-d:hover,.orb-d.h{box-shadow:0 8px 28px rgba(239,68,68,.4)!important;}
+
+@keyframes orb-pulse{
+  0%,100%{box-shadow:0 4px 16px rgba(249,115,22,.2),0 0 0 0 rgba(249,115,22,.3);}
+  50%{box-shadow:0 4px 16px rgba(249,115,22,.3),0 0 0 12px rgba(249,115,22,0);}
+}
+
+.orb-num{font-size:9px;font-weight:800;opacity:.75;letter-spacing:.05em;line-height:1;}
+.orb-icon{font-size:22px;line-height:1;}
+.orb-pct{font-size:13px;font-weight:900;line-height:1;}
+
+/* Stage label */
+.slabel{text-align:center;}
+.smonth{font-size:13px;font-weight:700;color:var(--text);}
+.stag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:3px;}
+.tag-s{background:#FEF3C7;color:#D97706;}
+.tag-a{background:#D1FAE5;color:#059669;}
+.tag-b{background:#DBEAFE;color:#2563EB;}
+.tag-c{background:#FFEDD5;color:#EA580C;}
+.tag-d{background:#FEE2E2;color:#DC2626;}
+.tag-active{background:#FFEDD5;color:#EA580C;}
+.tag-locked{background:#F1F5F9;color:#94A3B8;}
+
+/* No-target indicator on node */
+.no-tgt-dot{width:8px;height:8px;border-radius:50%;background:#E2E8F0;border:1.5px solid #94A3B8;position:absolute;top:6px;right:6px;}
+.has-tgt-dot{width:8px;height:8px;border-radius:50%;background:var(--green);position:absolute;top:6px;right:6px;}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border);}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+
+/* ── TARGET MODAL ── */
+.t-overlay{position:fixed;inset:0;background:rgba(20,30,80,.4);backdrop-filter:blur(5px);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;opacity:0;pointer-events:none;transition:opacity .2s;}
+.t-overlay.open{opacity:1;pointer-events:all;}
+.t-modal{background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:580px;max-height:calc(100vh - 56px);overflow-y:auto;transform:translateY(-18px);transition:transform .2s;}
+.t-overlay.open .t-modal{transform:translateY(0);}
+.t-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.t-title{font-size:17px;font-weight:900;color:var(--text);}
+.t-body{padding:20px 24px 28px;}
+.close-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.close-btn:hover{color:var(--red);border-color:var(--red);}
+
+/* Month tabs */
+.m-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:20px;}
+.m-tab{padding:7px 4px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;}
+.m-tab.on{background:var(--purple);border-color:var(--purple);color:#fff;}
+.m-tab.has-data{border-color:#C4B5FD;color:var(--purple);}
+
+/* Input grid */
+.inp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.inp-g{display:flex;flex-direction:column;gap:5px;}
+.inp-lbl{font-size:12px;font-weight:700;color:var(--text2);}
+.inp-hint{font-size:10px;color:var(--muted);}
+.inp-f{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;color:var(--text);background:var(--card);outline:none;transition:border-color .15s;width:100%;}
+.inp-f:focus{border-color:var(--purple);}
+.save-btn{width:100%;padding:12px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:background .15s;}
+.save-btn:hover{background:#7C3AED;}
+
+/* ── DETAIL MODAL ── */
+.d-overlay{position:fixed;inset:0;background:rgba(20,30,80,.4);backdrop-filter:blur(5px);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s;}
+.d-overlay.open{opacity:1;pointer-events:all;}
+.d-modal{background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:700px;max-height:92vh;overflow-y:auto;transform:scale(.95);transition:transform .2s;}
+.d-overlay.open .d-modal{transform:scale(1);}
+.d-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);border-radius:20px 20px 0 0;z-index:5;}
+.d-head-left{display:flex;align-items:center;gap:10px;}
+.d-icon{font-size:26px;}
+.d-name{font-size:18px;font-weight:900;color:var(--text);}
+.d-body{padding:20px 24px 28px;}
+
+/* Overall row */
+.overall-row{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:18px;margin-bottom:20px;}
+.overall-pct{font-size:44px;font-weight:900;line-height:1;min-width:92px;}
+.overall-right{flex:1;}
+.overall-lbl{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.bar-trk{height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:5px;transition:width .8s ease;}
+
+/* Section head */
+.sec-h{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;}
+
+/* Metric cards */
+.mcards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}
+.mc{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.mc-name{font-size:12px;color:var(--muted);}
+.mc-rate{font-size:13px;font-weight:800;}
+.mc-vals{display:flex;align-items:baseline;gap:3px;margin-bottom:7px;}
+.mc-actual{font-size:22px;font-weight:900;color:var(--text);}
+.mc-unit{font-size:12px;color:var(--muted);}
+.mc-tgt{font-size:11px;color:var(--muted);margin-left:auto;}
+.mc-trk{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.mc-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+
+/* Staff grid */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
+.scard{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;}
+.sav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;margin-bottom:8px;}
+.sname{font-size:14px;font-weight:700;color:var(--text);}
+.scontrib{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.sstats{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;}
+.ss{font-size:11px;color:var(--muted);}
+.ss b{color:var(--text2);font-weight:700;}
+
+/* No data */
+.nodata{text-align:center;padding:44px 16px;}
+.nodata-icon{font-size:48px;margin-bottom:12px;}
+.nodata h3{font-size:16px;color:var(--text);margin-bottom:6px;}
+.nodata p{font-size:13px;color:var(--muted);}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:700;background:var(--card);box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-left:4px solid var(--green);}
+.toast.err{border-left:4px solid var(--red);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+@media(max-width:700px){
+  .stage-grid{grid-template-columns:repeat(3,1fr);}
+  .sum-card{grid-template-columns:repeat(2,1fr);}
+  .mcards{grid-template-columns:1fr;}
+  .mini-wrap{padding-left:0;padding-top:14px;}
+}
+</style>
 </head>
 <body>
 
-<!-- ─── HEADER ─── -->
-<header class="header">
-  <div class="header-brand">
-    <div class="brand-icon">🎮</div>
-    <div class="brand-text">
-      <h1>門市闖關儀表板</h1>
-      <p>業績目標達成追蹤系統</p>
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <span class="hdr-icon">🎮</span>
+    <div>
+      <div class="hdr-title">門市闖關儀表板</div>
+      <div class="hdr-sub">業績目標達成追蹤系統</div>
     </div>
   </div>
-  <div class="header-right">
-    <select class="year-select" id="yearSelect" onchange="setYear(+this.value)"></select>
-    <button class="btn btn-ghost" onclick="downloadTemplate()">⬇ 下載範本</button>
-    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">⬆ 上傳業績</button>
-    <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleUpload(event)">
+  <div class="hdr-right">
+    <select class="year-sel" id="yearSel" onchange="setYear(+this.value)"></select>
+    <button class="btn btn-target" onclick="openTarget()">📋 設定月份目標</button>
+    <button class="btn btn-upload" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績 Excel</button>
+    <button class="btn btn-dl" onclick="dlTemplate()">⬇ 範本</button>
+    <input type="file" id="fileInp" class="file-inp" accept=".xlsx,.xls" onchange="handleUpload(event)">
   </div>
 </header>
 
-<!-- ─── MAIN ─── -->
+<!-- MAIN -->
 <main class="main">
 
   <!-- Annual summary -->
-  <div class="annual-card" id="annualCard">
-    <div class="stat-block">
-      <div class="stat-value" id="statCleared">0</div>
-      <div class="stat-label">月份已達標</div>
+  <div class="sum-card">
+    <div class="stat-col">
+      <div class="stat-num" id="sCleared">0</div>
+      <div class="stat-lbl">月份已達標</div>
     </div>
-    <div class="stat-block">
-      <div class="stat-value" id="statAvg">--</div>
-      <div class="stat-label">年度平均達成率</div>
+    <div class="stat-col">
+      <div class="stat-num" id="sAvg">--</div>
+      <div class="stat-lbl">年度平均達成率</div>
     </div>
-    <div class="stat-block">
-      <div class="stat-value" id="statActive">--</div>
-      <div class="stat-label">當前月份</div>
+    <div class="stat-col">
+      <div class="stat-num" id="sActive">--</div>
+      <div class="stat-lbl">當前關卡</div>
     </div>
-    <div class="metrics-summary">
-      <div class="metrics-summary-title">各指標年度平均</div>
-      <div class="mini-rows">
-        <div class="mini-row">
-          <span class="mini-label">銷售額</span>
-          <div class="mini-bar"><div class="mini-fill" id="mf-sales" style="background:var(--gold)"></div></div>
-          <span class="mini-val" id="mv-sales">--</span>
-        </div>
-        <div class="mini-row">
-          <span class="mini-label">AppleCare</span>
-          <div class="mini-bar"><div class="mini-fill" id="mf-ac" style="background:var(--green)"></div></div>
-          <span class="mini-val" id="mv-ac">--</span>
-        </div>
-        <div class="mini-row">
-          <span class="mini-label">配件率</span>
-          <div class="mini-bar"><div class="mini-fill" id="mf-acc" style="background:var(--blue)"></div></div>
-          <span class="mini-val" id="mv-acc">--</span>
-        </div>
-        <div class="mini-row">
-          <span class="mini-label">主商品</span>
-          <div class="mini-bar"><div class="mini-fill" id="mf-main" style="background:var(--purple)"></div></div>
-          <span class="mini-val" id="mv-main">--</span>
-        </div>
+    <div class="mini-wrap">
+      <div class="mini-title">各指標年度平均</div>
+      <div class="mini-grid">
+        <div class="mini-row"><span class="mini-lbl">銷售額</span><div class="mini-trk"><div class="mini-fill" id="mf0" style="background:var(--gold)"></div></div><span class="mini-val" id="mv0">--</span></div>
+        <div class="mini-row"><span class="mini-lbl">AppleCare</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--green)"></div></div><span class="mini-val" id="mv1">--</span></div>
+        <div class="mini-row"><span class="mini-lbl">配件率</span><div class="mini-trk"><div class="mini-fill" id="mf2" style="background:var(--blue)"></div></div><span class="mini-val" id="mv2">--</span></div>
+        <div class="mini-row"><span class="mini-lbl">主商品</span><div class="mini-trk"><div class="mini-fill" id="mf3" style="background:var(--purple)"></div></div><span class="mini-val" id="mv3">--</span></div>
       </div>
     </div>
   </div>
 
-  <!-- Stage map -->
+  <!-- Game map -->
   <div class="map-card">
-    <div class="map-header">
-      <div class="map-title">🗺 <span id="mapYearLabel">2026</span> 年度闖關地圖</div>
-      <div class="map-hint">點擊關卡查看詳情</div>
+    <div class="map-hdr">
+      <div>
+        <div class="map-ttl">🗺 <span id="mapLbl">2026</span> 年度闖關地圖</div>
+        <div class="map-hint">點擊關卡查看詳情 · 紫色按鈕可設定每月目標</div>
+      </div>
     </div>
-    <div class="stage-grid" id="stageGrid"></div>
+    <div class="stage-world">
+      <div class="stage-grid" id="stageGrid"></div>
+    </div>
     <div class="legend">
-      <div class="legend-item"><span>⭐</span> S 完美達標 (≥100%)</div>
-      <div class="legend-item"><span>✅</span> A 達標 (85-99%)</div>
-      <div class="legend-item"><span>🔵</span> B 良好 (70-84%)</div>
-      <div class="legend-item"><span>🔶</span> C 待加強 (55-69%)</div>
-      <div class="legend-item"><span>💀</span> D 未達標 (&lt;55%)</div>
-      <div class="legend-item"><span>🔥</span> 進行中</div>
-      <div class="legend-item"><span>🔒</span> 未開始</div>
+      <div class="leg-item">⭐ S 完美 ≥100%</div>
+      <div class="leg-item">✅ A 達標 85-99%</div>
+      <div class="leg-item">🔵 B 良好 70-84%</div>
+      <div class="leg-item">🔶 C 待加強 55-69%</div>
+      <div class="leg-item">💀 D 未達標 &lt;55%</div>
+      <div class="leg-item">🔥 進行中</div>
+      <div class="leg-item">🔒 未開始</div>
+      <div class="leg-item" style="margin-left:auto;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;"></span>目標已設定</div>
+      <div class="leg-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E2E8F0;border:1.5px solid #94A3B8;margin-right:4px;"></span>目標未設定</div>
     </div>
   </div>
 
 </main>
 
-<!-- ─── MODAL ─── -->
-<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
-  <div class="modal" id="modal">
-    <div class="modal-head">
-      <div class="modal-head-left">
-        <span class="modal-icon" id="modalIcon">📊</span>
-        <span class="modal-month-name" id="modalMonthName"></span>
-        <span class="stage-badge" id="modalBadge"></span>
-      </div>
-      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+<!-- TARGET MODAL -->
+<div class="t-overlay" id="tOverlay" onclick="handleTOverlay(event)">
+  <div class="t-modal" id="tModal">
+    <div class="t-head">
+      <div class="t-title">📋 設定月份目標</div>
+      <button class="close-btn" onclick="closeTarget()">✕</button>
     </div>
-    <div class="modal-body" id="modalBody"></div>
+    <div class="t-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">請對照當月目標 PDF，逐項填入數字後按「儲存目標」。</p>
+      <div class="m-tabs" id="mTabs"></div>
+      <div class="inp-grid" id="tForm">
+        <!-- rendered by JS -->
+      </div>
+      <button class="save-btn" onclick="saveTarget()">✅ 儲存目標</button>
+    </div>
   </div>
 </div>
 
-<!-- Toast -->
+<!-- DETAIL MODAL -->
+<div class="d-overlay" id="dOverlay" onclick="handleDOverlay(event)">
+  <div class="d-modal" id="dModal">
+    <div class="d-head">
+      <div class="d-head-left">
+        <span class="d-icon" id="dIcon">📊</span>
+        <span class="d-name" id="dName"></span>
+        <span class="stag" id="dBadge"></span>
+      </div>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="d-body" id="dBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ─────────────────────────
-//  Constants
-// ─────────────────────────
+// ─── Constants ───────────────────────────────────────
 const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-
 const METRICS = [
-  { key:'sales',   label:'銷售額',    unit:'元', color:'var(--gold)' },
-  { key:'accRate', label:'配件率',    unit:'%',  color:'var(--blue)' },
-  { key:'ac',      label:'AppleCare', unit:'台', color:'var(--green)' },
-  { key:'iphone',  label:'iPhone',    unit:'台', color:'var(--purple)' },
-  { key:'mac',     label:'Mac',       unit:'台', color:'var(--orange)' },
-  { key:'ipad',    label:'iPad',      unit:'台', color:'var(--cyan)' },
-  { key:'watch',   label:'Watch',     unit:'台', color:'var(--red)' },
+  {key:'sales',   lbl:'銷售額',    unit:'元', color:'var(--gold)'},
+  {key:'accRate', lbl:'配件率',    unit:'%',  color:'var(--blue)'},
+  {key:'ac',      lbl:'AppleCare', unit:'台', color:'var(--green)'},
+  {key:'iphone',  lbl:'iPhone',    unit:'台', color:'var(--purple)'},
+  {key:'mac',     lbl:'Mac',       unit:'台', color:'var(--orange)'},
+  {key:'ipad',    lbl:'iPad',      unit:'台', color:'var(--cyan)'},
+  {key:'watch',   lbl:'Watch',     unit:'台', color:'var(--red)'},
 ];
-
+const TARGET_LABELS = {
+  sales:'銷售額目標（元）', accRate:'配件率目標（%）',
+  ac:'AppleCare 目標（台）', iphone:'iPhone 目標（台）',
+  mac:'Mac 目標（台）', ipad:'iPad 目標（台）', watch:'Watch 目標（台）'
+};
+// Serpentine: row1=1-4, row2=8-5 reversed, row3=9-12
+const STAGE_DOM_ORDER = [1,2,3,4,8,7,6,5,9,10,11,12];
 const GRADE = {
-  icon:  { s:'⭐', a:'✅', b:'🔵', c:'🔶', d:'💀', active:'🔥', locked:'🔒' },
-  label: { s:'S 完美', a:'A 達標', b:'B 良好', c:'C 待加強', d:'D 未達標', active:'進行中', locked:'未開始' },
+  icon :{s:'⭐',a:'✅',b:'🔵',c:'🔶',d:'💀',active:'🔥',locked:'🔒'},
+  lbl  :{s:'S 完美',a:'A 達標',b:'B 良好',c:'C 待加強',d:'D 未達標',active:'進行中',locked:'未開始'},
 };
 
-// ─────────────────────────
-//  State
-// ─────────────────────────
-const state = {
-  year: new Date().getFullYear(),
-  data: null,   // { months: { 1: { targets:{}, staffRows:[] }, … } }
-};
+// ─── State ───────────────────────────────────────────
+const S = { year: new Date().getFullYear(), perf: null };
+let targetMonth = 1;
 
-// ─────────────────────────
-//  Helpers
-// ─────────────────────────
-const p = id => document.getElementById(id);
-
-function fmtNum(n) {
-  if (n == null || n === '') return '--';
-  return Number(n).toLocaleString('zh-TW');
-}
-
-function parseNum(v) {
-  if (v == null || v === '') return 0;
-  const n = parseFloat(String(v).replace(/,/g,''));
-  return isNaN(n) ? 0 : n;
-}
+// ─── Helpers ────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmtN = n => (n==null||n==='')?'--':Number(n).toLocaleString('zh-TW');
+const parseN = v => { const n=parseFloat(String(v??'').replace(/,/g,'')); return isNaN(n)?0:n; };
+const cap = v => Math.min(v??0,100);
 
 function gradeOf(pct) {
-  if (pct == null) return 'locked';
-  if (pct >= 100) return 's';
-  if (pct >= 85)  return 'a';
-  if (pct >= 70)  return 'b';
-  if (pct >= 55)  return 'c';
+  if (pct==null) return 'locked';
+  if (pct>=100) return 's'; if (pct>=85) return 'a';
+  if (pct>=70)  return 'b'; if (pct>=55) return 'c';
   return 'd';
 }
+const pctClr = g => ({s:'var(--gold)',a:'var(--green)',b:'var(--blue)',c:'var(--orange)',d:'var(--red)'}[g]||'var(--muted)');
 
-function pctColor(g) {
-  return { s:'var(--gold)', a:'var(--green)', b:'var(--blue)', c:'var(--orange)', d:'var(--red)' }[g] || 'var(--text-muted)';
+function lsKey(type) { return `stk_${type}_${S.year}`; }
+
+function loadTargets() {
+  try { return JSON.parse(localStorage.getItem(lsKey('tgt'))||'{}'); } catch{ return {}; }
 }
+function saveTargets(obj) { localStorage.setItem(lsKey('tgt'), JSON.stringify(obj)); }
+function loadPerf() {
+  try { return JSON.parse(localStorage.getItem(lsKey('perf'))||'null'); } catch{ return null; }
+}
+function savePerf(obj) { localStorage.setItem(lsKey('perf'), JSON.stringify(obj)); }
 
-function capPct(v) { return Math.min(v ?? 0, 100); }
+// ─── Calculation ────────────────────────────────────
+function calcMonth(m) {
+  const tgts = loadTargets();
+  const targets = tgts[m] || {};
+  const months = S.perf?.months || {};
+  const md = months[m];
+  if (!md?.staffRows?.length) return null;
+  const rows = md.staffRows;
 
-// ─────────────────────────
-//  Calculation
-// ─────────────────────────
-function calcMonth(monthData) {
-  if (!monthData) return null;
-  const { targets, staffRows } = monthData;
-  if (!targets || !staffRows.length) return null;
-
-  // Sum numeric metrics
-  const totals = {};
-  for (const r of staffRows) {
-    for (const m of METRICS) {
-      if (m.key === 'accRate') continue;
-      totals[m.key] = (totals[m.key] || 0) + (r[m.key] || 0);
+  const tot = {};
+  for (const r of rows) {
+    for (const mk of METRICS) {
+      if (mk.key==='accRate') continue;
+      tot[mk.key] = (tot[mk.key]||0)+(r[mk.key]||0);
     }
   }
-
-  // accRate: weighted average  (accRate × (iPhone+Mac+iPad+Watch)) / total units
-  const mainKeys = ['iphone','mac','ipad','watch'];
-  let accNumer = 0, accDenom = 0;
-  for (const r of staffRows) {
-    const units = mainKeys.reduce((s,k) => s + (r[k]||0), 0);
-    accNumer += (r.accRate || 0) * units;
-    accDenom += units;
+  // Weighted accRate
+  const mainK = ['iphone','mac','ipad','watch'];
+  let an=0,ad=0;
+  for (const r of rows) {
+    const u=mainK.reduce((s,k)=>s+(r[k]||0),0); an+=(r.accRate||0)*u; ad+=u;
   }
-  totals.accRate = accDenom > 0 ? accNumer / accDenom : 0;
+  tot.accRate = ad>0 ? an/ad : 0;
 
-  // Achievement rates
   const rates = {};
-  for (const m of METRICS) {
-    const t = targets[m.key];
-    rates[m.key] = (t && t > 0) ? Math.round((totals[m.key] || 0) / t * 100) : null;
+  for (const mk of METRICS) {
+    const t=targets[mk.key];
+    rates[mk.key] = (t&&t>0) ? Math.round((tot[mk.key]||0)/t*100) : null;
   }
-
-  // Main products average
-  const mainRates = mainKeys.map(k => rates[k]).filter(v => v != null);
+  const mainRates = mainK.map(k=>rates[k]).filter(v=>v!=null);
   const mainAvg = mainRates.length ? Math.round(mainRates.reduce((a,b)=>a+b,0)/mainRates.length) : null;
-
-  // Overall average (all non-null rates)
-  const all = Object.values(rates).filter(v => v != null);
+  const all = Object.values(rates).filter(v=>v!=null);
   const overall = all.length ? Math.round(all.reduce((a,b)=>a+b,0)/all.length) : null;
-
-  return { totals, rates, overall, mainAvg };
+  return {tot, rates, overall, mainAvg};
 }
 
-// ─────────────────────────
-//  Month status
-// ─────────────────────────
 function monthStatus(m) {
-  const now   = new Date();
-  const cy    = now.getFullYear();
-  const cm    = now.getMonth() + 1;
-  const hasData = !!(state.data?.months?.[m]?.staffRows?.length);
-
-  if (state.year < cy) return hasData ? 'done' : 'locked';
-  if (state.year > cy) return 'locked';
-  if (m < cm) return hasData ? 'done' : 'locked';
-  if (m === cm) return 'active';
+  const now=new Date(), cy=now.getFullYear(), cm=now.getMonth()+1;
+  const hasPerf = !!(S.perf?.months?.[m]?.staffRows?.length);
+  if (S.year<cy) return hasPerf?'done':'locked';
+  if (S.year>cy) return 'locked';
+  if (m<cm) return hasPerf?'done':'locked';
+  if (m===cm) return 'active';
   return 'locked';
 }
 
-// ─────────────────────────
-//  Render stages
-// ─────────────────────────
+// ─── Render Stages ──────────────────────────────────
 function renderStages() {
-  const grid = p('stageGrid');
+  const grid = $('stageGrid');
   grid.innerHTML = '';
+  const tgts = loadTargets();
 
-  for (let m = 1; m <= 12; m++) {
+  for (const m of STAGE_DOM_ORDER) {
     const status = monthStatus(m);
-    const md     = state.data?.months?.[m];
-    const calc   = (status !== 'locked') ? calcMonth(md) : null;
-    const grade  = status === 'active' ? 'active' : status === 'locked' ? 'locked' : gradeOf(calc?.overall ?? null);
+    const calc = (status!=='locked') ? calcMonth(m) : null;
+    const pct = calc?.overall ?? null;
+    const grade = status==='active'?'active': status==='locked'?'locked': gradeOf(pct);
+    const hasTgt = !!(tgts[m] && Object.values(tgts[m]).some(v=>v>0));
 
     const node = document.createElement('div');
-    node.className = `stage-node grade-${grade}${grade === 'locked' ? ' locked' : ''}`;
-    if (grade !== 'locked') node.onclick = () => openModal(m);
+    node.className = `snode${grade==='locked'?' locked':''}`;
+    node.dataset.month = m;
+    if (grade!=='locked') node.onclick = ()=>openDetail(m);
 
-    const pct = calc?.overall ?? null;
     node.innerHTML = `
-      <div class="stage-seq">STAGE ${m}</div>
-      <span class="stage-icon-wrap">${GRADE.icon[grade]}</span>
-      <div class="stage-month-name">${MONTHS[m-1]}</div>
-      <div class="stage-pct text-${grade === 'locked' || grade === 'active' ? 'muted-dim' : grade}">
-        ${pct !== null ? pct+'%' : '--'}
+      ${hasTgt ? '<div class="has-tgt-dot"></div>' : '<div class="no-tgt-dot"></div>'}
+      <div class="orb orb-${grade}">
+        <span class="orb-num">STAGE ${m}</span>
+        <span class="orb-icon">${GRADE.icon[grade]}</span>
+        <span class="orb-pct">${pct!==null?pct+'%':'--'}</span>
       </div>
-      <div class="stage-badge bg-${grade}">${GRADE.label[grade]}</div>
-    `;
+      <div class="slabel">
+        <div class="smonth">${MONTHS[m-1]}</div>
+        <div class="stag tag-${grade}">${GRADE.lbl[grade]}</div>
+      </div>`;
     grid.appendChild(node);
   }
+
+  requestAnimationFrame(()=>requestAnimationFrame(drawPath));
 }
 
-// ─────────────────────────
-//  Render summary
-// ─────────────────────────
-function renderSummary() {
-  const now = new Date();
-  let cleared = 0;
-  const overalls=[], salesR=[], accR=[], acR=[], mainR=[];
+// ─── SVG Path ───────────────────────────────────────
+function drawPath() {
+  const grid = $('stageGrid');
+  const old = grid.querySelector('.path-svg');
+  if (old) old.remove();
 
-  for (let m = 1; m <= 12; m++) {
-    const md   = state.data?.months?.[m];
-    const calc = calcMonth(md);
-    if (!calc || calc.overall == null) continue;
-    overalls.push(calc.overall);
-    if (calc.overall >= 100) cleared++;
-    if (calc.rates.sales   != null) salesR.push(calc.rates.sales);
-    if (calc.rates.accRate != null) accR.push(calc.rates.accRate);
-    if (calc.rates.ac      != null) acR.push(calc.rates.ac);
-    if (calc.mainAvg       != null) mainR.push(calc.mainAvg);
+  const gr = grid.getBoundingClientRect();
+  const pts = [];
+  for (let m=1; m<=12; m++) {
+    const node = grid.querySelector(`[data-month="${m}"]`);
+    const orb  = node?.querySelector('.orb');
+    if (!orb) continue;
+    const r = orb.getBoundingClientRect();
+    pts.push({ x: r.left-gr.left+r.width/2, y: r.top-gr.top+r.height/2 });
+  }
+  if (pts.length<2) return;
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('path-svg');
+  svg.setAttribute('width', gr.width);
+  svg.setAttribute('height', gr.height);
+  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:0;';
+
+  // Build smooth bezier path
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i=1; i<pts.length; i++) {
+    const p=pts[i-1], c=pts[i];
+    const mx=(p.x+c.x)/2;
+    d += ` C ${mx.toFixed(1)},${p.y.toFixed(1)} ${mx.toFixed(1)},${c.y.toFixed(1)} ${c.x.toFixed(1)},${c.y.toFixed(1)}`;
   }
 
-  const avg = r => r.length ? Math.round(r.reduce((a,b)=>a+b,0)/r.length) : null;
-  const setBar = (fillId, valId, rates) => {
-    const a = avg(rates);
-    p(fillId).style.width = `${capPct(a)}%`;
-    p(valId).textContent  = a != null ? `${a}%` : '--';
-  };
-
-  p('statCleared').textContent = cleared;
-  p('statAvg').textContent     = overalls.length ? `${avg(overalls)}%` : '--';
-  p('statActive').textContent  = (state.year === now.getFullYear()) ? `${now.getMonth()+1}月` : '--';
-
-  setBar('mf-sales', 'mv-sales', salesR);
-  setBar('mf-acc',   'mv-acc',   accR);
-  setBar('mf-ac',    'mv-ac',    acR);
-  setBar('mf-main',  'mv-main',  mainR);
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill','none');
+  path.setAttribute('stroke','var(--path)');
+  path.setAttribute('stroke-width','3');
+  path.setAttribute('stroke-dasharray','8 5');
+  path.setAttribute('stroke-linecap','round');
+  svg.appendChild(path);
+  grid.style.position='relative';
+  grid.insertBefore(svg, grid.firstChild);
 }
 
-// ─────────────────────────
-//  Modal
-// ─────────────────────────
-function openModal(m) {
-  const md     = state.data?.months?.[m];
-  const calc   = calcMonth(md);
-  const status = monthStatus(m);
-  const grade  = status === 'active' ? 'active' : gradeOf(calc?.overall ?? null);
+// ─── Summary ────────────────────────────────────────
+function renderSummary() {
+  const now=new Date();
+  let cleared=0;
+  const oAll=[],sR=[],aR=[],acR=[],mR=[];
+  for (let m=1; m<=12; m++) {
+    const c=calcMonth(m); if (!c||c.overall==null) continue;
+    oAll.push(c.overall);
+    if (c.overall>=100) cleared++;
+    if (c.rates.sales!=null)   sR.push(c.rates.sales);
+    if (c.rates.accRate!=null) aR.push(c.rates.accRate);
+    if (c.rates.ac!=null)      acR.push(c.rates.ac);
+    if (c.mainAvg!=null)       mR.push(c.mainAvg);
+  }
+  const avg = r=>r.length?Math.round(r.reduce((a,b)=>a+b,0)/r.length):null;
+  const setBar=(fi,vi,r)=>{ const a=avg(r); $(fi).style.width=`${cap(a)}%`; $(vi).textContent=a!=null?`${a}%`:'--'; };
 
-  p('modalIcon').textContent       = GRADE.icon[grade];
-  p('modalMonthName').textContent  = MONTHS[m-1] + ' 詳情';
-  p('modalBadge').className        = `stage-badge bg-${grade}`;
-  p('modalBadge').textContent      = GRADE.label[grade];
+  $('sCleared').textContent = cleared;
+  $('sAvg').textContent = oAll.length?`${avg(oAll)}%`:'--';
+  $('sActive').textContent = (S.year===now.getFullYear())?`${now.getMonth()+1}月`:'--';
+  setBar('mf0','mv0',sR); setBar('mf1','mv1',acR);
+  setBar('mf2','mv2',aR); setBar('mf3','mv3',mR);
+}
 
-  const body = p('modalBody');
+// ─── Target Modal ────────────────────────────────────
+function openTarget(month) {
+  renderMonthTabs();
+  selectTargetMonth(month||1);
+  $('tOverlay').classList.add('open');
+}
+function closeTarget() { $('tOverlay').classList.remove('open'); }
+function handleTOverlay(e) { if(e.target===$('tOverlay')) closeTarget(); }
 
-  if (!md || !calc) {
-    body.innerHTML = `
-      <div class="no-data">
-        <div class="no-data-icon">🔒</div>
-        <h3>尚無 ${MONTHS[m-1]} 資料</h3>
-        <p>請上傳包含此月份的 Excel 業績檔</p>
-      </div>`;
+function renderMonthTabs() {
+  const tgts=loadTargets();
+  $('mTabs').innerHTML = MONTHS.map((_,i)=>{
+    const m=i+1;
+    const has=!!(tgts[m]&&Object.values(tgts[m]).some(v=>v>0));
+    const on=m===targetMonth?'on':'';
+    const hc=(!on&&has)?'has-data':'';
+    return `<div class="m-tab ${on} ${hc}" onclick="selectTargetMonth(${m})">${MONTHS[i]}</div>`;
+  }).join('');
+}
+
+function selectTargetMonth(m) {
+  targetMonth=m;
+  const tgts=loadTargets();
+  const cur=tgts[m]||{};
+  $('tForm').innerHTML = METRICS.map(mk=>`
+    <div class="inp-g">
+      <label class="inp-lbl">${TARGET_LABELS[mk.key]}</label>
+      <input class="inp-f" id="tinp-${mk.key}" type="number" min="0" placeholder="0"
+        value="${cur[mk.key]||''}">
+    </div>`).join('');
+  renderMonthTabs();
+}
+
+function saveTarget() {
+  const tgts=loadTargets();
+  tgts[targetMonth]={};
+  for (const mk of METRICS) {
+    const v=parseN($(`tinp-${mk.key}`)?.value);
+    tgts[targetMonth][mk.key]=v;
+  }
+  saveTargets(tgts);
+  renderStages(); renderSummary();
+  showToast(`✅ ${MONTHS[targetMonth-1]} 目標已儲存`,'ok');
+  renderMonthTabs();
+}
+
+// ─── Detail Modal ────────────────────────────────────
+function openDetail(m) {
+  const status=monthStatus(m);
+  const calc=calcMonth(m);
+  const grade=status==='active'?'active':gradeOf(calc?.overall??null);
+  $('dIcon').textContent=GRADE.icon[grade];
+  $('dName').textContent=MONTHS[m-1]+' 詳情';
+  $('dBadge').className=`stag tag-${grade}`;
+  $('dBadge').textContent=GRADE.lbl[grade];
+
+  const body=$('dBody');
+  const tgts=loadTargets();
+  const targets=tgts[m]||{};
+  const md=S.perf?.months?.[m];
+
+  if (!calc) {
+    body.innerHTML=`<div class="nodata"><div class="nodata-icon">📭</div><h3>尚無${MONTHS[m-1]}業績資料</h3><p>請上傳 Excel 業績檔，或先設定本月目標</p><button class="save-btn" style="margin-top:16px;width:auto;padding:10px 24px;" onclick="closeDetail();openTarget(${m})">📋 設定${MONTHS[m-1]}目標</button></div>`;
   } else {
-    const { totals, rates, overall } = calc;
-    const g = gradeOf(overall);
-    const barColor = pctColor(g);
-
-    // Overall row
-    let html = `
-      <div class="overall-bar-row">
-        <div class="overall-pct-big" style="color:${barColor}">${overall ?? '--'}%</div>
-        <div class="overall-info">
-          <div class="overall-label">門市整體達成率（各指標平均）</div>
-          <div class="overall-bar-track">
-            <div class="overall-bar-fill" style="width:${capPct(overall)}%;background:${barColor}"></div>
-          </div>
+    const {tot,rates,overall}=calc;
+    const g=gradeOf(overall);
+    let html=`
+      <div class="overall-row">
+        <div class="overall-pct" style="color:${pctClr(g)}">${overall??'--'}%</div>
+        <div class="overall-right">
+          <div class="overall-lbl">門市整體達成率（各指標加權平均）</div>
+          <div class="bar-trk"><div class="bar-fill" style="width:${cap(overall)}%;background:${pctClr(g)}"></div></div>
         </div>
       </div>
-      <div class="section-head">各項指標</div>
-      <div class="metric-cards">
-    `;
-
-    for (const m2 of METRICS) {
-      const r   = rates[m2.key];
-      const act = totals[m2.key];
-      const tgt = md.targets?.[m2.key];
-      const mg  = gradeOf(r);
-      html += `
-        <div class="metric-card">
-          <div class="mc-header">
-            <span class="mc-name">${m2.label}</span>
-            <span class="mc-pct" style="color:${r!=null?pctColor(mg):'var(--text-muted)'}">${r!=null?r+'%':'--'}</span>
+      <div class="sec-h">🎯 各項指標達成</div>
+      <div class="mcards">`;
+    for (const mk of METRICS) {
+      const r=rates[mk.key]; const mg=gradeOf(r);
+      html+=`
+        <div class="mc">
+          <div class="mc-top"><span class="mc-name">${mk.lbl}</span><span class="mc-rate" style="color:${r!=null?pctClr(mg):'var(--muted)'}">${r!=null?r+'%':'--'}</span></div>
+          <div class="mc-vals">
+            <span class="mc-actual">${mk.key==='sales'?fmtN(Math.round(tot[mk.key]||0)):Math.round(tot[mk.key]||0)}</span>
+            <span class="mc-unit">${mk.unit}</span>
+            ${targets[mk.key]?`<span class="mc-tgt">/ ${mk.key==='sales'?fmtN(targets[mk.key]):targets[mk.key]}${mk.unit}</span>`:''}
           </div>
-          <div class="mc-values">
-            <span class="mc-actual">${m2.key==='sales'?fmtNum(act):Math.round(act??0)}</span>
-            <span class="mc-unit">${m2.unit}</span>
-            ${tgt ? `<span class="mc-target">/ ${m2.key==='sales'?fmtNum(tgt):tgt}${m2.unit}</span>` : ''}
-          </div>
-          <div class="mc-bar-track">
-            <div class="mc-bar-fill" style="width:${capPct(r)}%;background:${m2.color}"></div>
-          </div>
-        </div>
-      `;
+          <div class="mc-trk"><div class="mc-fill" style="width:${cap(r)}%;background:${mk.color}"></div></div>
+        </div>`;
     }
-    html += '</div>';
+    html+='</div>';
 
-    // Staff
-    const names = [...new Set(md.staffRows.map(r => r.name))];
-    html += `<div class="section-head">個人業績</div><div class="staff-grid">`;
-
+    const names=[...new Set(md.staffRows.map(r=>r.name))];
+    html+=`<div class="sec-h">👥 個人業績</div><div class="sgrid">`;
     for (const name of names) {
-      const rows = md.staffRows.filter(r => r.name === name);
-      const st = {};
-      for (const row of rows) {
-        for (const mk of METRICS) {
-          if (mk.key === 'accRate') continue;
-          st[mk.key] = (st[mk.key] || 0) + (row[mk.key] || 0);
-        }
-      }
-      // accRate weighted
-      const mainKeys = ['iphone','mac','ipad','watch'];
-      let an=0, ad=0;
-      for (const row of rows) {
-        const u = mainKeys.reduce((s,k)=>s+(row[k]||0),0);
-        an += (row.accRate||0)*u; ad += u;
-      }
-      st.accRate = ad>0 ? Math.round(an/ad) : 0;
-
-      const contrib = totals.sales > 0 ? Math.round(st.sales/totals.sales*100) : 0;
-
-      html += `
-        <div class="staff-card">
-          <div class="staff-avatar">${name[0]||'?'}</div>
-          <div class="staff-name">${name}</div>
-          <div class="staff-contrib">銷售貢獻 ${contrib}%</div>
-          <div class="staff-stats-grid">
-            <div class="staff-stat-item">iPhone <b>${st.iphone||0}</b></div>
-            <div class="staff-stat-item">Mac <b>${st.mac||0}</b></div>
-            <div class="staff-stat-item">iPad <b>${st.ipad||0}</b></div>
-            <div class="staff-stat-item">Watch <b>${st.watch||0}</b></div>
-            <div class="staff-stat-item">AC <b>${st.ac||0}</b></div>
-            <div class="staff-stat-item">配件率 <b>${st.accRate}%</b></div>
+      const rows=md.staffRows.filter(r=>r.name===name);
+      const st={};
+      for (const r of rows) for (const mk of METRICS) { if(mk.key!=='accRate') st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0); }
+      const mainK=['iphone','mac','ipad','watch'];
+      let an2=0,ad2=0;
+      for (const r of rows) { const u=mainK.reduce((s,k)=>s+(r[k]||0),0); an2+=(r.accRate||0)*u; ad2+=u; }
+      st.accRate=ad2>0?Math.round(an2/ad2):0;
+      const contrib=tot.sales>0?Math.round(st.sales/tot.sales*100):0;
+      html+=`
+        <div class="scard">
+          <div class="sav">${name[0]||'?'}</div>
+          <div class="sname">${name}</div>
+          <div class="scontrib">銷售貢獻 ${contrib}%</div>
+          <div class="sstats">
+            <div class="ss">iPhone <b>${st.iphone||0}</b></div>
+            <div class="ss">Mac <b>${st.mac||0}</b></div>
+            <div class="ss">iPad <b>${st.ipad||0}</b></div>
+            <div class="ss">Watch <b>${st.watch||0}</b></div>
+            <div class="ss">AC <b>${st.ac||0}</b></div>
+            <div class="ss">配件率 <b>${st.accRate}%</b></div>
           </div>
-        </div>
-      `;
+        </div>`;
     }
-    html += '</div>';
-    body.innerHTML = html;
+    html+='</div>';
+    body.innerHTML=html;
   }
-
-  p('overlay').classList.add('open');
+  $('dOverlay').classList.add('open');
 }
+function closeDetail() { $('dOverlay').classList.remove('open'); }
+function handleDOverlay(e) { if(e.target===$('dOverlay')) closeDetail(); }
 
-function closeModal() {
-  p('overlay').classList.remove('open');
-}
-
-function handleOverlayClick(e) {
-  if (e.target === p('overlay')) closeModal();
-}
-
-// ─────────────────────────
-//  Excel upload
-// ─────────────────────────
+// ─── Excel Upload ────────────────────────────────────
 function handleUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
     try {
-      const wb = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+      const find=names=>{ for(const n of names) if(wb.Sheets[n]) return wb.Sheets[n]; return null; };
+      const tSh=find(['目標','targets'])||wb.Sheets[wb.SheetNames[0]];
+      const pSh=find(['業績','performance'])||wb.Sheets[wb.SheetNames[1]];
+      if(!tSh||!pSh){showToast('找不到目標/業績工作表','err');return;}
 
-      // Try to find sheets by name or by index
-      const getSheet = (names) => {
-        for (const n of names) if (wb.Sheets[n]) return wb.Sheets[n];
-        return null;
-      };
-
-      const tSheet = getSheet(['目標','targets','Targets']);
-      const pSheet = getSheet(['業績','performance','Performance']);
-
-      if (!tSheet || !pSheet) {
-        if (wb.SheetNames.length >= 2) {
-          // Fallback: first sheet = targets, second = performance
-          var tS = wb.Sheets[wb.SheetNames[0]];
-          var pS = wb.Sheets[wb.SheetNames[1]];
-          processSheets(tS, pS);
-        } else {
-          showToast('找不到「目標」或「業績」工作表', 'err');
-        }
-        return;
+      // Merge targets from Excel into localStorage (don't overwrite manual)
+      const tgts=loadTargets();
+      const tRows=XLSX.utils.sheet_to_json(tSh,{defval:''});
+      for (const row of tRows) {
+        const m=parseInt(row['月份']||row['月']||0);
+        if(m<1||m>12) continue;
+        tgts[m]={
+          sales:   parseN(row['銷售額目標']||row['銷售額']),
+          accRate: parseN(row['配件率目標%']||row['配件率目標']||row['配件率']),
+          ac:      parseN(row['AC目標']||row['AppleCare目標']||row['AC']),
+          iphone:  parseN(row['iPhone目標']||row['iPhone']),
+          mac:     parseN(row['Mac目標']||row['Mac']),
+          ipad:    parseN(row['iPad目標']||row['iPad']),
+          watch:   parseN(row['Watch目標']||row['Watch']),
+        };
       }
-      processSheets(tSheet, pSheet);
-    } catch(err) {
-      showToast('讀取失敗：' + err.message, 'err');
-      console.error(err);
-    }
-    e.target.value = '';
+      saveTargets(tgts);
+
+      const months={};
+      const pRows=XLSX.utils.sheet_to_json(pSh,{defval:''});
+      for (const row of pRows) {
+        const m=parseInt(row['月份']||row['月']||0);
+        const name=String(row['姓名']||row['name']||'').trim();
+        if(m<1||m>12||!name) continue;
+        months[m]=months[m]||{staffRows:[]};
+        months[m].staffRows.push({
+          name,
+          sales:   parseN(row['銷售額']),
+          accRate: parseN(row['配件率%']||row['配件率']),
+          ac:      parseN(row['AC']||row['AppleCare']),
+          iphone:  parseN(row['iPhone']),
+          mac:     parseN(row['Mac']),
+          ipad:    parseN(row['iPad']),
+          watch:   parseN(row['Watch']),
+        });
+      }
+      S.perf={months};
+      savePerf(S.perf);
+      renderStages(); renderSummary();
+      showToast('✅ 業績資料載入成功！','ok');
+    } catch(err) { showToast('讀取失敗：'+err.message,'err'); console.error(err); }
+    e.target.value='';
   };
   reader.readAsArrayBuffer(file);
 }
 
-function processSheets(tSheet, pSheet) {
-  const tRows = XLSX.utils.sheet_to_json(tSheet, { defval:'' });
-  const pRows = XLSX.utils.sheet_to_json(pSheet, { defval:'' });
-  const months = {};
-
-  for (const row of tRows) {
-    const m = parseInt(row['月份']||row['月']||row['month']||0);
-    if (m<1||m>12) continue;
-    months[m] = months[m] || { targets:{}, staffRows:[] };
-    months[m].targets = {
-      sales:   parseNum(row['銷售額目標']||row['銷售額']),
-      accRate: parseNum(row['配件率目標%']||row['配件率目標']||row['配件率']),
-      ac:      parseNum(row['AC目標']||row['AppleCare目標']||row['AC']),
-      iphone:  parseNum(row['iPhone目標']||row['iPhone']),
-      mac:     parseNum(row['Mac目標']||row['Mac']),
-      ipad:    parseNum(row['iPad目標']||row['iPad']),
-      watch:   parseNum(row['Watch目標']||row['Watch']),
-    };
-  }
-
-  for (const row of pRows) {
-    const m    = parseInt(row['月份']||row['月']||row['month']||0);
-    const name = String(row['姓名']||row['name']||'').trim();
-    if (m<1||m>12||!name) continue;
-    months[m] = months[m] || { targets:{}, staffRows:[] };
-    months[m].staffRows.push({
-      name,
-      sales:   parseNum(row['銷售額']),
-      accRate: parseNum(row['配件率%']||row['配件率']),
-      ac:      parseNum(row['AC']||row['AppleCare']),
-      iphone:  parseNum(row['iPhone']),
-      mac:     parseNum(row['Mac']),
-      ipad:    parseNum(row['iPad']),
-      watch:   parseNum(row['Watch']),
-    });
-  }
-
-  state.data = { months };
-  renderStages();
-  renderSummary();
-  showToast('✅ 業績資料載入成功！', 'ok');
+// ─── Download Template ───────────────────────────────
+function dlTemplate() {
+  const wb=XLSX.utils.book_new();
+  const tData=[['月份','銷售額目標','配件率目標%','AC目標','iPhone目標','Mac目標','iPad目標','Watch目標']];
+  for(let m=1;m<=12;m++) tData.push([m,'','','','','','','']);
+  const tSh=XLSX.utils.aoa_to_sheet(tData);
+  tSh['!cols']=[{wch:6},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,tSh,'目標');
+  const pData=[['月份','姓名','銷售額','配件率%','AC','iPhone','Mac','iPad','Watch'],[1,'專員A','','','','','','',''],[1,'專員B','','','','','','','']];
+  const pSh=XLSX.utils.aoa_to_sheet(pData);
+  pSh['!cols']=[{wch:6},{wch:8},{wch:10},{wch:8},{wch:6},{wch:8},{wch:6},{wch:6},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,pSh,'業績');
+  XLSX.writeFile(wb,'門市業績範本.xlsx');
 }
 
-// ─────────────────────────
-//  Download template
-// ─────────────────────────
-function downloadTemplate() {
-  const wb = XLSX.utils.book_new();
-
-  // Sheet 1: 目標
-  const tData = [
-    ['月份','銷售額目標','配件率目標%','AC目標','iPhone目標','Mac目標','iPad目標','Watch目標'],
-  ];
-  for (let m=1; m<=12; m++) tData.push([m,'','','','','','','']);
-  const tSheet = XLSX.utils.aoa_to_sheet(tData);
-  tSheet['!cols'] = [{wch:6},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:8},{wch:8}];
-  XLSX.utils.book_append_sheet(wb, tSheet, '目標');
-
-  // Sheet 2: 業績
-  const pData = [
-    ['月份','姓名','銷售額','配件率%','AC','iPhone','Mac','iPad','Watch'],
-    [1,'專員A','','','','','','',''],
-    [1,'專員B','','','','','','',''],
-    [1,'專員C','','','','','','',''],
-  ];
-  const pSheet = XLSX.utils.aoa_to_sheet(pData);
-  pSheet['!cols'] = [{wch:6},{wch:8},{wch:10},{wch:8},{wch:6},{wch:8},{wch:6},{wch:6},{wch:8}];
-  XLSX.utils.book_append_sheet(wb, pSheet, '業績');
-
-  XLSX.writeFile(wb, '門市業績範本.xlsx');
+// ─── Toast ───────────────────────────────────────────
+function showToast(msg,type='ok') {
+  const t=$('toast'); t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3200);
 }
 
-// ─────────────────────────
-//  Year selector
-// ─────────────────────────
+// ─── Year ────────────────────────────────────────────
 function setYear(y) {
-  state.year = y;
-  p('mapYearLabel').textContent = y;
-  renderStages();
-  renderSummary();
+  S.year=y; $('mapLbl').textContent=y;
+  S.perf=loadPerf();
+  renderStages(); renderSummary();
 }
 
-function initYearSelect() {
-  const cy  = new Date().getFullYear();
-  const sel = p('yearSelect');
-  sel.innerHTML = '';
-  for (let y = cy-1; y <= cy+1; y++) {
-    const o = document.createElement('option');
-    o.value = y;
-    o.textContent = `${y} 年`;
-    if (y === cy) o.selected = true;
+// ─── Init ────────────────────────────────────────────
+function init() {
+  const cy=new Date().getFullYear();
+  const sel=$('yearSel'); sel.innerHTML='';
+  for(let y=cy-1;y<=cy+1;y++){
+    const o=document.createElement('option');
+    o.value=y; o.textContent=`${y} 年`; if(y===cy) o.selected=true;
     sel.appendChild(o);
   }
-  state.year = cy;
-  p('mapYearLabel').textContent = cy;
+  S.year=cy; S.perf=loadPerf();
+  $('mapLbl').textContent=cy;
+  renderStages(); renderSummary();
+  window.addEventListener('resize',()=>requestAnimationFrame(drawPath));
 }
-
-// ─────────────────────────
-//  Toast
-// ─────────────────────────
-function showToast(msg, type='ok') {
-  const t = p('toast');
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-// ─────────────────────────
-//  Init
-// ─────────────────────────
-initYearSelect();
-renderStages();
-renderSummary();
+init();
 </script>
 </body>
 </html>
