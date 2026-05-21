@@ -248,6 +248,40 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .save-btn{width:100%;padding:12px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:background .15s;}
 .save-btn:hover{background:#7C3AED;}
 
+/* ── SPEECH BUBBLE ── */
+.speech-bubble{background:#fff;border:2px solid;border-radius:10px 10px 10px 3px;padding:5px 10px;font-size:11px;font-weight:800;white-space:nowrap;margin-bottom:6px;position:relative;animation:bubble-in .5s cubic-bezier(.175,.885,.32,1.275) both;text-align:center;max-width:130px;line-height:1.3;}
+.speech-bubble::after{content:'';position:absolute;bottom:-7px;left:12px;border:4px solid transparent;}
+.p1 .speech-bubble{color:var(--p1a);border-color:var(--p1a);}
+.p1 .speech-bubble::after{border-top-color:var(--p1a);}
+.p2 .speech-bubble{color:var(--p2a);border-color:var(--p2a);}
+.p2 .speech-bubble::after{border-top-color:var(--p2a);}
+@keyframes bubble-in{0%{transform:scale(0) translateY(8px);opacity:0;}100%{transform:scale(1) translateY(0);opacity:1;}}
+
+/* ── SHIMMER on progress fill ── */
+.pcard-fill{overflow:hidden;position:relative;}
+.pcard-fill::after{content:'';position:absolute;top:0;bottom:0;width:50px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:bar-shimmer 1.8s linear infinite;}
+@keyframes bar-shimmer{0%{left:-50px;}100%{left:100%;}}
+
+/* ── CHARACTER BOUNCE on track ── */
+.char-on-track{animation:char-hop 1.1s ease-in-out infinite;}
+@keyframes char-hop{0%,100%{transform:translateX(-50%) translateY(0);}40%{transform:translateX(-50%) translateY(-7px);}70%{transform:translateX(-50%) translateY(-2px);}}
+
+/* ── CONFETTI ── */
+.confetti-box{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:20px;z-index:2;}
+.cf{position:absolute;top:-14px;animation:cf-fall linear forwards;}
+@keyframes cf-fall{to{transform:translateY(260px) rotate(720deg);opacity:0;}}
+
+/* ── STORE DIALOGUE BANNER ── */
+.store-line{border-radius:12px;padding:11px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;border-left:5px solid;}
+
+/* ── HERO WARNING PULSE (D grade) ── */
+.hero-danger{animation:danger-pulse 1.8s ease-in-out infinite;}
+@keyframes danger-pulse{0%,100%{box-shadow:var(--shadow-lg);}50%{box-shadow:0 0 0 6px rgba(239,68,68,.2),var(--shadow-lg);}}
+
+/* ── HERO CELEBRATE (S/A grade) ── */
+.hero-celebrate{animation:celebrate-glow 2s ease-in-out infinite;}
+@keyframes celebrate-glow{0%,100%{box-shadow:var(--shadow-lg);}50%{box-shadow:0 0 0 6px rgba(16,185,129,.18),var(--shadow-lg);}}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;background:var(--card);box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);}
 .toast.show{transform:translateY(0);opacity:1;}
@@ -522,17 +556,51 @@ function goStage(m){
   window.scrollTo(0,0);
 }
 
+function getDialogue(contrib,fair,typeIdx){
+  const r=contrib/Math.max(fair,1);
+  const w=typeIdx===0;
+  if(r>=1.5) return w?'我就是MVP！🏆':'魔法全開！✨';
+  if(r>=1.1) return w?'超額完成！💪':'施法成功！🔮';
+  if(r>=0.9) return w?'打起精神！⚔️':'穩住魔力！🌟';
+  if(r>=0.6) return w?'快追上去！💥':'魔力不足...💨';
+  return w?'緊急出動！🚨':'需要補魔！😰';
+}
+
+function getStoreLine(grade){
+  return{s:'🎊 完美通關！門市全員是英雄！',a:'⭐ 達標！優秀的銷售團隊！',b:'📈 表現不錯，再加把勁！',c:'💪 還有機會！全員衝刺！',d:'⚡ 緊急任務！需要全力以赴！',active:'🔥 進行中，努力衝刺吧！',locked:'🔒 等待英雄入場...'}[grade]||'';
+}
+
+function spawnConfetti(boxId,grade){
+  const box=document.getElementById(boxId);if(!box)return;
+  const cols=grade==='s'?['#F59E0B','#FBBF24','#FEF3C7','#F97316','#fff','#E879F9']:['#10B981','#34D399','#D1FAE5','#3B82F6','#C7D2F0','#fff'];
+  const n=grade==='s'?55:30;
+  for(let i=0;i<n;i++){
+    const el=document.createElement('div');el.className='cf';
+    const sz=6+Math.random()*9;
+    el.style.cssText=`left:${Math.random()*100}%;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-delay:${Math.random()*2}s;animation-duration:${1.4+Math.random()*1.6}s;opacity:1;`;
+    box.appendChild(el);
+  }
+}
+
 function renderStageBody(m,calc,grade){
   const body=$('sv-body');
   const targets=loadTgts()[m]||{};
   const pct=calc?.overall??null;
   const gc=GRADE.color[grade];
   const md=S.perf?.months?.[m];
+  const storeLine=getStoreLine(grade);
+  const slBorder=gc;
+  const slBg=grade==='s'?'#FFFBEB':grade==='a'?'#ECFDF5':grade==='b'?'#EFF6FF':grade==='c'?'#FFF7ED':grade==='d'?'#FEF2F2':'#F4F7FF';
   let html='';
 
+  // ── Store dialogue banner
+  if(storeLine) html+=`<div class="store-line" style="background:${slBg};border-color:${slBorder};color:${slBorder}">${storeLine}</div>`;
+
   // ── Store overall hero
+  const heroCls=grade==='d'?'hero-danger':(grade==='s'||grade==='a')?'hero-celebrate':'';
   html+=`
-    <div class="sv-hero" style="border-top:4px solid ${gc}">
+    <div class="sv-hero ${heroCls}" style="border-top:4px solid ${gc};position:relative;overflow:hidden">
+      <div id="confetti-box" class="confetti-box"></div>
       <div class="hero-icon">${GRADE.icon[grade]}</div>
       <div class="hero-pct" style="color:${gc}">${pct!=null?pct+'%':'--'}</div>
       <div class="hero-right">
@@ -584,11 +652,13 @@ function renderStageBody(m,calc,grade){
 
       // Build player card HTML
       const initial=name[0]||'?';
+      const dialogue=getDialogue(salesContrib,fairShare,idx%2);
       html+=`
         <div class="pcard ${ptype}">
           <div class="pcard-top">
-            <!-- Character figure -->
+            <!-- Character figure + speech bubble -->
             <div class="char-wrap">
+              <div class="speech-bubble">${dialogue}</div>
               <div class="char-hat"></div>
               <div class="char-head">${initial}</div>
               <div class="char-body"></div>
@@ -610,14 +680,13 @@ function renderStageBody(m,calc,grade){
                 <div class="pcard-contrib-lbl">銷售貢獻<br>${status}</div>
               </div>
               <!-- Main progress track with character ON it -->
-              <div class="pcard-track-wrap" style="padding-top:30px">
-                <div class="pcard-track">
-                  <div class="pcard-fill" style="width:${trackPct}%;position:relative">
-                    <!-- Mini character ON the track -->
-                    <div class="char-on-track" style="left:100%">
-                      <div class="char-mini-head">${initial}</div>
-                      <div class="char-mini-body"></div>
-                    </div>
+              <div class="pcard-track-wrap" style="padding-top:34px">
+                <div class="pcard-track" style="overflow:visible;position:relative">
+                  <div class="pcard-fill" style="width:${trackPct}%"></div>
+                  <!-- Character on track (outside fill, so shimmer still works) -->
+                  <div class="char-on-track" style="position:absolute;top:-30px;left:${trackPct}%">
+                    <div class="char-mini-head">${initial}</div>
+                    <div class="char-mini-body"></div>
                   </div>
                   <!-- Fair share marker -->
                   <div class="fair-marker" style="left:${fairPct}%">
@@ -689,6 +758,7 @@ function renderStageBody(m,calc,grade){
     </div>`;
 
   body.innerHTML=html;
+  if(grade==='s'||grade==='a') spawnConfetti('confetti-box',grade);
 }
 
 function saveStageTgt(m){
