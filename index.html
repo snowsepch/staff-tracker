@@ -11,24 +11,20 @@
   --text:#1A2240;--text2:#3A4870;--muted:#7A8DB0;
   --shadow:0 2px 14px rgba(50,80,180,.08);--shadow-lg:0 8px 32px rgba(50,80,180,.13);
   --gold:#F59E0B;--gold2:#FBBF24;
-  --green:#10B981;--green2:#34D399;
-  --blue:#3B82F6;--blue2:#60A5FA;
-  --orange:#F97316;--orange2:#FB923C;
-  --red:#EF4444;--purple:#8B5CF6;--cyan:#06B6D4;
+  --green:#10B981;--blue:#3B82F6;
+  --orange:#F97316;--red:#EF4444;--purple:#8B5CF6;--cyan:#06B6D4;
   --path:#C7D2F0;
-  --acc:var(--blue); /* active accent, overridden per grade */
+  /* Player palettes */
+  --p1a:#F97316;--p1b:#FBBF24;--p1c:#EA580C;   /* warrior: orange */
+  --p2a:#6366F1;--p2b:#818CF8;--p2c:#4F46E5;   /* mage: indigo */
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','PingFang TC',sans-serif;min-height:100vh;overflow-x:hidden;}
-
-/* ── VIEW MANAGEMENT ── */
 #app{position:relative;min-height:100vh;}
 .view{width:100%;min-height:100vh;display:none;}
 .view.v-on{display:block;}
 
-/* ════════════════════════════════════════
-   MAP VIEW
-════════════════════════════════════════ */
+/* ════ MAP VIEW ════════════════════════════════ */
 #view-map .hdr{background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .brand{display:flex;align-items:center;gap:10px;}
 .brand-icon{font-size:26px;}
@@ -44,14 +40,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .btn-dl{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
 .btn-dl:hover{color:var(--blue);border-color:var(--blue);}
 .file-inp{display:none;}
-
 .map-main{max-width:1120px;margin:0 auto;padding:24px;}
 
-/* Summary card */
+/* Summary */
 .sum-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 28px;display:grid;grid-template-columns:repeat(3,auto) 1fr;align-items:center;margin-bottom:18px;}
 .stat-col{text-align:center;padding:0 28px;border-right:1px solid var(--border);}
-.stat-col:first-child{padding-left:0;}
-.stat-col:last-of-type{border-right:none;}
+.stat-col:first-child{padding-left:0;}.stat-col:last-of-type{border-right:none;}
 .stat-num{font-size:36px;font-weight:900;color:var(--gold);line-height:1;}
 .stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
 .mini-wrap{padding-left:28px;}
@@ -69,7 +63,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .map-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;}
 .map-ttl{font-size:16px;font-weight:900;color:var(--text);display:flex;align-items:center;gap:8px;}
 .map-hint{font-size:12px;color:var(--muted);margin-top:4px;}
-
 .stage-world{position:relative;}
 .stage-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 12px;position:relative;z-index:1;}
 
@@ -78,11 +71,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .snode:hover:not(.locked){transform:translateY(-6px);}
 .snode.locked{cursor:default;opacity:.4;}
 .orb{width:84px;height:84px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;transition:box-shadow .2s;border:3px solid transparent;}
-.orb-s {background:linear-gradient(145deg,#FBBF24,#F59E0B);border-color:#D97706;color:#fff;}
-.orb-a {background:linear-gradient(145deg,#34D399,#10B981);border-color:#059669;color:#fff;}
-.orb-b {background:linear-gradient(145deg,#60A5FA,#3B82F6);border-color:#2563EB;color:#fff;}
-.orb-c {background:linear-gradient(145deg,#FB923C,#F97316);border-color:#EA580C;color:#fff;}
-.orb-d {background:linear-gradient(145deg,#F87171,#EF4444);border-color:#DC2626;color:#fff;}
+.orb-s{background:linear-gradient(145deg,#FBBF24,#F59E0B);border-color:#D97706;color:#fff;}
+.orb-a{background:linear-gradient(145deg,#34D399,#10B981);border-color:#059669;color:#fff;}
+.orb-b{background:linear-gradient(145deg,#60A5FA,#3B82F6);border-color:#2563EB;color:#fff;}
+.orb-c{background:linear-gradient(145deg,#FB923C,#F97316);border-color:#EA580C;color:#fff;}
+.orb-d{background:linear-gradient(145deg,#F87171,#EF4444);border-color:#DC2626;color:#fff;}
 .orb-active{background:linear-gradient(145deg,#FEF3C7,#FDE68A);border-color:var(--orange);color:var(--orange);animation:orb-pulse 2.2s ease-in-out infinite;}
 .orb-locked{background:linear-gradient(145deg,#F1F5F9,#E2E8F0);border-color:#CBD5E1;color:#94A3B8;}
 .snode:hover:not(.locked) .orb{box-shadow:0 10px 30px rgba(0,0,0,.18);}
@@ -93,98 +86,147 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .slabel{text-align:center;}
 .smonth{font-size:13px;font-weight:700;color:var(--text);}
 .stag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:3px;}
-.tag-s{background:#FEF3C7;color:#D97706;}
-.tag-a{background:#D1FAE5;color:#059669;}
-.tag-b{background:#DBEAFE;color:#2563EB;}
-.tag-c{background:#FFEDD5;color:#EA580C;}
-.tag-d{background:#FEE2E2;color:#DC2626;}
-.tag-active{background:#FFEDD5;color:#EA580C;}
-.tag-locked{background:#F1F5F9;color:#94A3B8;}
+.tag-s{background:#FEF3C7;color:#D97706;}.tag-a{background:#D1FAE5;color:#059669;}
+.tag-b{background:#DBEAFE;color:#2563EB;}.tag-c{background:#FFEDD5;color:#EA580C;}
+.tag-d{background:#FEE2E2;color:#DC2626;}.tag-active{background:#FFEDD5;color:#EA580C;}.tag-locked{background:#F1F5F9;color:#94A3B8;}
 .tgt-dot{width:8px;height:8px;border-radius:50%;position:absolute;top:6px;right:6px;}
-.dot-yes{background:var(--green);}
-.dot-no{background:#E2E8F0;border:1.5px solid #94A3B8;}
-
-/* Legend */
+.dot-yes{background:var(--green);}.dot-no{background:#E2E8F0;border:1.5px solid #94A3B8;}
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border);}
 .leg{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);}
 
-/* ════════════════════════════════════════
-   STAGE VIEW
-════════════════════════════════════════ */
+/* ════ STAGE VIEW ════════════════════════════════ */
 #view-stage{background:var(--bg);}
-
-/* Stage header bar */
-.sv-hdr{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.25);}
-.sv-back{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.3);border:1.5px solid rgba(255,255,255,.5);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;backdrop-filter:blur(4px);}
-.sv-back:hover{background:rgba(255,255,255,.45);}
+.sv-hdr{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.2);}
+.sv-back{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.45);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;backdrop-filter:blur(4px);}
+.sv-back:hover{background:rgba(255,255,255,.4);}
 .sv-info{display:flex;align-items:center;gap:10px;}
-.sv-stage-num{font-size:12px;font-weight:800;color:rgba(255,255,255,.7);letter-spacing:.08em;}
-.sv-month{font-size:20px;font-weight:900;color:#fff;}
-.sv-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.35);}
-.sv-actions{display:flex;gap:8px;}
-.sv-btn{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;backdrop-filter:blur(4px);}
-.sv-btn:hover{background:rgba(255,255,255,.35);}
+.sv-num{font-size:12px;font-weight:800;color:rgba(255,255,255,.7);letter-spacing:.08em;}
+.sv-mname{font-size:20px;font-weight:900;color:#fff;}
+.sv-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.3);}
+.sv-acts{display:flex;gap:8px;}
+.sv-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.38);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;}
+.sv-btn:hover{background:rgba(255,255,255,.32);}
+.sv-body{max-width:960px;margin:0 auto;padding:28px 24px 56px;}
 
-/* Stage body */
-.sv-body{max-width:960px;margin:0 auto;padding:28px 24px 48px;}
-
-/* Hero */
-.sv-hero{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);padding:28px 32px;display:flex;align-items:center;gap:32px;margin-bottom:20px;position:relative;overflow:hidden;}
-.sv-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;opacity:.07;}
-.hero-icon{font-size:52px;line-height:1;flex-shrink:0;}
-.hero-pct{font-size:64px;font-weight:900;line-height:1;flex-shrink:0;}
+/* Store hero row */
+.sv-hero{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);padding:24px 28px;display:flex;align-items:center;gap:24px;margin-bottom:20px;}
+.hero-icon{font-size:50px;flex-shrink:0;}
+.hero-pct{font-size:60px;font-weight:900;line-height:1;flex-shrink:0;}
 .hero-right{flex:1;}
 .hero-lbl{font-size:13px;color:var(--muted);margin-bottom:10px;}
-.hero-bar-trk{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:8px;}
+.hero-bar-trk{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:6px;}
 .hero-bar-fill{height:100%;border-radius:6px;transition:width .9s ease;}
 .hero-sub{font-size:12px;color:var(--muted);}
 
-/* Section */
+/* ── PLAYER CARDS ─────────────────────────────── */
 .sv-sec{margin-bottom:20px;}
-.sv-sec-title{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.sv-sec-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
 
-/* Target panel */
+.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+
+/* Player card */
+.pcard{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px;border:2px solid transparent;position:relative;overflow:hidden;}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.pcard.p1{border-color:rgba(249,115,22,.2);}
+.pcard.p1::before{background:linear-gradient(90deg,var(--p1a),var(--p1b));}
+.pcard.p2{border-color:rgba(99,102,241,.2);}
+.pcard.p2::before{background:linear-gradient(90deg,var(--p2a),var(--p2b));}
+
+/* Character figure */
+.pcard-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;}
+.char-wrap{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;}
+
+/* Hat */
+.char-hat{width:0;height:0;margin-bottom:-1px;}
+.p1 .char-hat{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid var(--p1b);}
+.p2 .char-hat{width:20px;height:12px;background:var(--p2b);border-radius:50% 50% 0 0;}
+
+/* Head */
+.char-head{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15);position:relative;flex-shrink:0;}
+.p1 .char-head{background:linear-gradient(145deg,var(--p1b),var(--p1a));}
+.p2 .char-head{background:linear-gradient(145deg,var(--p2b),var(--p2a));}
+/* Face dot eyes */
+.char-head::after{content:'';position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:10px;height:3px;background:rgba(255,255,255,.6);border-radius:2px;}
+
+/* Body */
+.char-body{width:28px;height:22px;border-radius:6px 6px 3px 3px;position:relative;margin-top:2px;}
+.p1 .char-body{background:var(--p1a);}
+.p2 .char-body{background:var(--p2a);}
+/* Arms */
+.char-arms{display:flex;gap:2px;margin-top:1px;}
+.char-arm{width:8px;height:14px;border-radius:4px;}
+.p1 .char-arm{background:var(--p1a);}
+.p2 .char-arm{background:var(--p2a);}
+/* Legs */
+.char-legs{display:flex;gap:4px;margin-top:2px;}
+.char-leg{width:10px;height:16px;border-radius:0 0 5px 5px;}
+.p1 .char-leg{background:var(--p1c);}
+.p2 .char-leg{background:var(--p2c);}
+
+/* Type label under char */
+.char-type{font-size:10px;font-weight:800;margin-top:5px;text-align:center;}
+.p1 .char-type{color:var(--p1a);}
+.p2 .char-type{color:var(--p2a);}
+
+/* Player info right of character */
+.pcard-info{flex:1;min-width:0;}
+.pcard-name{font-size:18px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;}
+.pcard-contrib-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.pcard-contrib-pct{font-size:28px;font-weight:900;line-height:1;}
+.p1 .pcard-contrib-pct{color:var(--p1a);}
+.p2 .pcard-contrib-pct{color:var(--p2a);}
+.pcard-contrib-lbl{font-size:11px;color:var(--muted);line-height:1.3;}
+
+/* Main progress track with character ON it */
+.pcard-track-wrap{position:relative;margin-bottom:6px;margin-top:8px;}
+.pcard-track{height:14px;background:var(--border);border-radius:7px;overflow:visible;position:relative;}
+.pcard-fill{height:100%;border-radius:7px;transition:width .9s cubic-bezier(.4,0,.2,1);position:relative;}
+.p1 .pcard-fill{background:linear-gradient(90deg,var(--p1a),var(--p1b));}
+.p2 .pcard-fill{background:linear-gradient(90deg,var(--p2a),var(--p2b));}
+/* Character on track */
+.char-on-track{position:absolute;top:-26px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;}
+.char-mini-head{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.p1 .char-mini-head{background:linear-gradient(145deg,var(--p1b),var(--p1a));}
+.p2 .char-mini-head{background:linear-gradient(145deg,var(--p2b),var(--p2a));}
+.char-mini-body{width:3px;height:6px;border-radius:0 0 2px 2px;}
+.p1 .char-mini-body{background:var(--p1a);}
+.p2 .char-mini-body{background:var(--p2a);}
+/* Fair share marker */
+.fair-marker{position:absolute;top:-8px;bottom:-8px;width:2px;background:rgba(0,0,0,.15);border-radius:1px;pointer-events:none;}
+.fair-label{position:absolute;top:-22px;transform:translateX(-50%);font-size:9px;color:var(--muted);white-space:nowrap;font-weight:700;background:var(--card);padding:0 3px;border-radius:3px;}
+/* 100% finish line */
+.finish-line{position:absolute;right:0;top:-8px;bottom:-8px;width:2px;background:var(--green);border-radius:1px;}
+.finish-label{position:absolute;right:0;top:-22px;font-size:9px;color:var(--green);font-weight:800;}
+.track-labels{display:flex;justify-content:space-between;margin-top:4px;}
+.track-lbl{font-size:10px;color:var(--muted);}
+
+/* Metric mini-bars */
+.pcard-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;border-top:1px solid var(--border);padding-top:14px;margin-top:6px;}
+.pm-row{display:flex;align-items:center;gap:5px;}
+.pm-lbl{font-size:10px;color:var(--muted);width:40px;flex-shrink:0;}
+.pm-trk{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.pm-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+.pm-val{font-size:10px;font-weight:700;color:var(--text2);width:26px;text-align:right;flex-shrink:0;}
+
+/* Inline target panel */
 .tgt-panel{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;}
-.tgt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px;}
+.tgt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:16px;}
 .tgt-grp{display:flex;flex-direction:column;gap:4px;}
 .tgt-lbl{font-size:11px;font-weight:700;color:var(--text2);}
 .tgt-inp{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:var(--card2);outline:none;transition:border-color .15s;width:100%;}
 .tgt-inp:focus{border-color:var(--purple);}
+.tgt-row-btn{display:flex;align-items:center;justify-content:space-between;}
+.tgt-note{font-size:12px;color:var(--muted);}
 .tgt-save{padding:10px 22px;background:var(--purple);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;transition:background .15s;}
 .tgt-save:hover{background:#7C3AED;}
-.tgt-row{display:flex;align-items:center;justify-content:space-between;}
-.tgt-saved-note{font-size:12px;color:var(--green);font-weight:600;display:none;}
 
-/* Metric cards */
-.mcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
-.mc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);}
-.mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.mc-name{font-size:12px;font-weight:700;color:var(--muted);}
-.mc-rate{font-size:14px;font-weight:900;}
-.mc-vals{display:flex;align-items:baseline;gap:3px;margin-bottom:8px;}
-.mc-actual{font-size:26px;font-weight:900;color:var(--text);}
-.mc-unit{font-size:12px;color:var(--muted);}
-.mc-tgt{font-size:11px;color:var(--muted);margin-left:auto;}
-.mc-trk{height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
-.mc-fill{height:100%;border-radius:4px;transition:width .8s ease;}
-
-/* Staff grid */
-.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;}
-.scard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 14px;box-shadow:var(--shadow);}
-.sav{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;margin-bottom:10px;}
-.sname{font-size:15px;font-weight:800;color:var(--text);}
-.scontrib{font-size:12px;color:var(--muted);margin-bottom:10px;}
-.sstats{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;}
-.ss{font-size:12px;color:var(--muted);}
-.ss b{color:var(--text2);font-weight:700;}
-
-/* No data in stage */
+/* No data */
 .nodata{text-align:center;padding:48px 16px;}
 .nodata-icon{font-size:52px;margin-bottom:14px;}
 .nodata h3{font-size:17px;color:var(--text);margin-bottom:8px;}
 .nodata p{font-size:13px;color:var(--muted);margin-bottom:20px;}
 
-/* Target modal (map level) */
+/* Target modal */
 .t-overlay{position:fixed;inset:0;background:rgba(20,30,80,.4);backdrop-filter:blur(5px);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;opacity:0;pointer-events:none;transition:opacity .2s;}
 .t-overlay.open{opacity:1;pointer-events:all;}
 .t-modal{background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:580px;max-height:calc(100vh - 56px);overflow-y:auto;transform:translateY(-18px);transition:transform .2s;}
@@ -211,17 +253,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.ok{border-left:4px solid var(--green);}
 .toast.err{border-left:4px solid var(--red);}
-
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 @media(max-width:700px){
   .stage-grid{grid-template-columns:repeat(3,1fr);}
   .sum-card{grid-template-columns:repeat(2,1fr);}
-  .mcards{grid-template-columns:1fr 1fr;}
   .mini-wrap{padding-left:0;padding-top:14px;}
   .sv-hero{flex-direction:column;align-items:flex-start;gap:16px;}
-  .hero-pct{font-size:44px;}
+  .hero-pct{font-size:42px;}
+  .players-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -265,20 +304,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
       <div class="map-hdr">
         <div>
           <div class="map-ttl">🗺 <span id="mapLbl">2026</span> 年度闖關地圖</div>
-          <div class="map-hint">點擊關卡進入該月專屬介面 · 綠點=目標已設定</div>
+          <div class="map-hint">點擊關卡進入玩家進度介面 · 綠點＝目標已設定</div>
         </div>
       </div>
       <div class="stage-world">
         <div class="stage-grid" id="stageGrid"></div>
       </div>
       <div class="legend">
-        <div class="leg">⭐ S 完美 ≥100%</div>
-        <div class="leg">✅ A 達標 85-99%</div>
-        <div class="leg">🔵 B 良好 70-84%</div>
-        <div class="leg">🔶 C 待加強 55-69%</div>
-        <div class="leg">💀 D 未達標 &lt;55%</div>
-        <div class="leg">🔥 進行中</div>
-        <div class="leg">🔒 未開始</div>
+        <div class="leg">⭐ S ≥100%</div><div class="leg">✅ A 85-99%</div>
+        <div class="leg">🔵 B 70-84%</div><div class="leg">🔶 C 55-69%</div>
+        <div class="leg">💀 D &lt;55%</div><div class="leg">🔥 進行中</div><div class="leg">🔒 未開始</div>
         <div class="leg" style="margin-left:auto">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px"></span>目標已設定
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E2E8F0;border:1.5px solid #94A3B8;margin:0 4px 0 10px"></span>目標未設定
@@ -293,11 +328,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
   <div id="sv-hdr" class="sv-hdr">
     <button class="sv-back" onclick="goMap()">← 返回地圖</button>
     <div class="sv-info">
-      <span class="sv-stage-num" id="sv-num">STAGE 1</span>
-      <span class="sv-month" id="sv-month">1月</span>
+      <span class="sv-num" id="sv-num">STAGE 1</span>
+      <span class="sv-mname" id="sv-mname">1月</span>
       <span class="sv-badge" id="sv-badge">--</span>
     </div>
-    <div class="sv-actions">
+    <div class="sv-acts">
       <button class="sv-btn" onclick="openTargetModal(currentStage)">📋 設定本月目標</button>
       <button class="sv-btn" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績</button>
     </div>
@@ -326,56 +361,58 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── Constants ──────────────────────────────────────
+// ── Constants ─────────────────────────────────────
 const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 const METRICS=[
-  {key:'sales',   lbl:'銷售額',    tLbl:'銷售額目標（元）',    unit:'元', color:'var(--gold)'},
-  {key:'accRate', lbl:'配件率',    tLbl:'配件率目標（%）',     unit:'%',  color:'var(--blue)'},
-  {key:'ac',      lbl:'AppleCare', tLbl:'AppleCare 目標（台）',unit:'台', color:'var(--green)'},
-  {key:'iphone',  lbl:'iPhone',    tLbl:'iPhone 目標（台）',   unit:'台', color:'var(--purple)'},
-  {key:'mac',     lbl:'Mac',       tLbl:'Mac 目標（台）',      unit:'台', color:'var(--orange)'},
-  {key:'ipad',    lbl:'iPad',      tLbl:'iPad 目標（台）',     unit:'台', color:'var(--cyan)'},
-  {key:'watch',   lbl:'Watch',     tLbl:'Watch 目標（台）',    unit:'台', color:'var(--red)'},
+  {key:'sales',   lbl:'銷售額',    tLbl:'銷售額目標（元）',    unit:'元', color:'#F59E0B'},
+  {key:'accRate', lbl:'配件率',    tLbl:'配件率目標（%）',     unit:'%',  color:'#3B82F6'},
+  {key:'ac',      lbl:'AppleCare', tLbl:'AppleCare 目標（台）',unit:'台', color:'#10B981'},
+  {key:'iphone',  lbl:'iPhone',    tLbl:'iPhone 目標（台）',   unit:'台', color:'#8B5CF6'},
+  {key:'mac',     lbl:'Mac',       tLbl:'Mac 目標（台）',      unit:'台', color:'#F97316'},
+  {key:'ipad',    lbl:'iPad',      tLbl:'iPad 目標（台）',     unit:'台', color:'#06B6D4'},
+  {key:'watch',   lbl:'Watch',     tLbl:'Watch 目標（台）',    unit:'台', color:'#EF4444'},
 ];
 const DOM_ORDER=[1,2,3,4,8,7,6,5,9,10,11,12];
 const GRADE={
-  icon :{s:'⭐',a:'✅',b:'🔵',c:'🔶',d:'💀',active:'🔥',locked:'🔒'},
-  lbl  :{s:'S 完美達標',a:'A 達標',b:'B 良好',c:'C 待加強',d:'D 未達標',active:'進行中',locked:'未開始'},
-  color:{s:'var(--gold)',a:'var(--green)',b:'var(--blue)',c:'var(--orange)',d:'var(--red)',active:'var(--orange)',locked:'#94A3B8'},
-  bg   :{s:'linear-gradient(135deg,#F59E0B,#D97706)',a:'linear-gradient(135deg,#10B981,#059669)',b:'linear-gradient(135deg,#3B82F6,#2563EB)',c:'linear-gradient(135deg,#F97316,#EA580C)',d:'linear-gradient(135deg,#EF4444,#DC2626)',active:'linear-gradient(135deg,#F97316,#EA580C)',locked:'linear-gradient(135deg,#94A3B8,#64748B)'},
+  icon:{s:'⭐',a:'✅',b:'🔵',c:'🔶',d:'💀',active:'🔥',locked:'🔒'},
+  lbl:{s:'S 完美達標',a:'A 達標',b:'B 良好',c:'C 待加強',d:'D 未達標',active:'進行中',locked:'未開始'},
+  color:{s:'#F59E0B',a:'#10B981',b:'#3B82F6',c:'#F97316',d:'#EF4444',active:'#F97316',locked:'#94A3B8'},
+  bg:{s:'linear-gradient(135deg,#F59E0B,#D97706)',a:'linear-gradient(135deg,#10B981,#059669)',b:'linear-gradient(135deg,#3B82F6,#2563EB)',c:'linear-gradient(135deg,#F97316,#EA580C)',d:'linear-gradient(135deg,#EF4444,#DC2626)',active:'linear-gradient(135deg,#F97316,#EA580C)',locked:'linear-gradient(135deg,#94A3B8,#64748B)'},
 };
+const PLAYER_TYPE=['p1','p2'];
+const PLAYER_LABEL=['⚔️ 戰士','🔮 法師'];
 
-// ─── State ──────────────────────────────────────────
-const S={year:new Date().getFullYear(), perf:null};
-let currentStage=1, targetModalMonth=1;
+// ── State ─────────────────────────────────────────
+const S={year:new Date().getFullYear(),perf:null};
+let currentStage=1,tModalMonth=1;
 
-// ─── Helpers ────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────
 const $=id=>document.getElementById(id);
 const fmtN=n=>(n==null||n==='')?'--':Number(n).toLocaleString('zh-TW');
 const parseN=v=>{const n=parseFloat(String(v??'').replace(/,/g,''));return isNaN(n)?0:n;};
-const cap=v=>Math.min(v??0,100);
-function gradeOf(pct){if(pct==null)return 'locked';if(pct>=100)return 's';if(pct>=85)return 'a';if(pct>=70)return 'b';if(pct>=55)return 'c';return 'd';}
+const cap=(v,mx=100)=>Math.min(Math.max(v??0,0),mx);
+function gradeOf(p){if(p==null)return 'locked';if(p>=100)return 's';if(p>=85)return 'a';if(p>=70)return 'b';if(p>=55)return 'c';return 'd';}
 const lsKey=t=>`stk_${t}_${S.year}`;
-function loadTgts(){try{return JSON.parse(localStorage.getItem(lsKey('tgt'))||'{}')}catch{return {};}}
+function loadTgts(){try{return JSON.parse(localStorage.getItem(lsKey('tgt'))||'{}')}catch{return{};}}
 function saveTgts(o){localStorage.setItem(lsKey('tgt'),JSON.stringify(o));}
 function loadPerf(){try{return JSON.parse(localStorage.getItem(lsKey('perf'))||'null')}catch{return null;}}
 function savePerf(o){localStorage.setItem(lsKey('perf'),JSON.stringify(o));}
 
-// ─── Calculation ────────────────────────────────────
+// ── Calc ──────────────────────────────────────────
 function calcMonth(m){
-  const tgts=loadTgts(); const targets=tgts[m]||{};
+  const targets=loadTgts()[m]||{};
   const md=S.perf?.months?.[m];
   if(!md?.staffRows?.length) return null;
   const rows=md.staffRows;
   const tot={};
-  for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate') tot[mk.key]=(tot[mk.key]||0)+(r[mk.key]||0);}
-  const mk2=['iphone','mac','ipad','watch'];
+  for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate')tot[mk.key]=(tot[mk.key]||0)+(r[mk.key]||0);}
+  const mainK=['iphone','mac','ipad','watch'];
   let an=0,ad=0;
-  for(const r of rows){const u=mk2.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
+  for(const r of rows){const u=mainK.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
   tot.accRate=ad>0?an/ad:0;
   const rates={};
   for(const mk of METRICS){const t=targets[mk.key];rates[mk.key]=(t&&t>0)?Math.round((tot[mk.key]||0)/t*100):null;}
-  const mainR=mk2.map(k=>rates[k]).filter(v=>v!=null);
+  const mainR=mainK.map(k=>rates[k]).filter(v=>v!=null);
   const mainAvg=mainR.length?Math.round(mainR.reduce((a,b)=>a+b,0)/mainR.length):null;
   const all=Object.values(rates).filter(v=>v!=null);
   const overall=all.length?Math.round(all.reduce((a,b)=>a+b,0)/all.length):null;
@@ -392,9 +429,9 @@ function monthStatus(m){
   return 'locked';
 }
 
-// ─── MAP VIEW ───────────────────────────────────────
+// ── Map Render ────────────────────────────────────
 function renderStages(){
-  const grid=$('stageGrid'); grid.innerHTML='';
+  const grid=$('stageGrid');grid.innerHTML='';
   const tgts=loadTgts();
   for(const m of DOM_ORDER){
     const st=monthStatus(m),calc=(st!=='locked')?calcMonth(m):null;
@@ -404,7 +441,7 @@ function renderStages(){
     const node=document.createElement('div');
     node.className=`snode${grade==='locked'?' locked':''}`;
     node.dataset.month=m;
-    if(grade!=='locked') node.onclick=()=>goStage(m);
+    if(grade!=='locked')node.onclick=()=>goStage(m);
     node.innerHTML=`
       <div class="tgt-dot ${hasTgt?'dot-yes':'dot-no'}"></div>
       <div class="orb orb-${grade}">
@@ -423,12 +460,12 @@ function renderStages(){
 
 function drawPath(){
   const grid=$('stageGrid');
-  const old=grid.querySelector('.path-svg'); if(old)old.remove();
+  const old=grid.querySelector('.path-svg');if(old)old.remove();
   const gr=grid.getBoundingClientRect();
   const pts=[];
   for(let m=1;m<=12;m++){
     const node=grid.querySelector(`[data-month="${m}"]`);
-    const orb=node?.querySelector('.orb'); if(!orb)continue;
+    const orb=node?.querySelector('.orb');if(!orb)continue;
     const r=orb.getBoundingClientRect();
     pts.push({x:r.left-gr.left+r.width/2,y:r.top-gr.top+r.height/2});
   }
@@ -452,8 +489,7 @@ function drawPath(){
 }
 
 function renderSummary(){
-  const now=new Date();
-  let cleared=0;
+  const now=new Date();let cleared=0;
   const oA=[],sR=[],aR=[],acR=[],mR=[];
   for(let m=1;m<=12;m++){
     const c=calcMonth(m);if(!c||c.overall==null)continue;
@@ -467,57 +503,174 @@ function renderSummary(){
   const setBar=(fi,vi,r)=>{const a=avg(r);$(fi).style.width=`${cap(a)}%`;$(vi).textContent=a!=null?`${a}%`:'--';};
   $('sCleared').textContent=cleared;
   $('sAvg').textContent=oA.length?`${avg(oA)}%`:'--';
-  $('sActive').textContent=(S.year===now.getFullYear())?`${now.getMonth()+1}月`:'--';
+  $('sActive').textContent=(S.year===new Date().getFullYear())?`${now.getMonth()+1}月`:'--';
   setBar('mf0','mv0',sR);setBar('mf1','mv1',acR);setBar('mf2','mv2',aR);setBar('mf3','mv3',mR);
 }
 
-// ─── STAGE VIEW ─────────────────────────────────────
+// ── Stage View ────────────────────────────────────
 function goStage(m){
   currentStage=m;
   const st=monthStatus(m),calc=calcMonth(m);
   const grade=st==='active'?'active':gradeOf(calc?.overall??null);
-
-  // Header
-  const hdr=$('sv-hdr');
-  hdr.style.background=GRADE.bg[grade];
+  $('sv-hdr').style.background=GRADE.bg[grade];
   $('sv-num').textContent=`STAGE ${m}`;
-  $('sv-month').textContent=MONTHS[m-1];
+  $('sv-mname').textContent=MONTHS[m-1];
   $('sv-badge').textContent=GRADE.lbl[grade];
-
-  // Build body
-  renderStageBody(m, calc, grade);
-
-  // Switch views
+  renderStageBody(m,calc,grade);
   $('view-map').classList.remove('v-on');
   $('view-stage').classList.add('v-on');
   window.scrollTo(0,0);
 }
 
-function renderStageBody(m, calc, grade){
+function renderStageBody(m,calc,grade){
   const body=$('sv-body');
-  const tgts=loadTgts();
-  const targets=tgts[m]||{};
+  const targets=loadTgts()[m]||{};
   const pct=calc?.overall??null;
   const gc=GRADE.color[grade];
+  const md=S.perf?.months?.[m];
+  let html='';
 
-  // ── Hero
-  let html=`
+  // ── Store overall hero
+  html+=`
     <div class="sv-hero" style="border-top:4px solid ${gc}">
       <div class="hero-icon">${GRADE.icon[grade]}</div>
-      <div class="hero-pct" style="color:${gc}">${pct!==null?pct+'%':'--'}</div>
+      <div class="hero-pct" style="color:${gc}">${pct!=null?pct+'%':'--'}</div>
       <div class="hero-right">
-        <div class="hero-lbl">門市整體達成率（各指標平均）・ STAGE ${m} ${MONTHS[m-1]}</div>
+        <div class="hero-lbl">門市整體達成率 · STAGE ${m} ${MONTHS[m-1]}</div>
         <div class="hero-bar-trk"><div class="hero-bar-fill" style="width:${cap(pct)}%;background:${gc}"></div></div>
-        <div class="hero-sub">${pct===null?'尚無業績資料，請上傳 Excel 或設定目標後重新整理':pct>=100?'🎉 完美達標！繼續保持！':pct>=85?'✅ 本月表現優秀':pct>=70?'📈 繼續加油，差一點就達標':'⚡ 需要衝刺，加油！'}</div>
+        <div class="hero-sub">${pct==null?'尚無業績資料，請設定目標並上傳 Excel':pct>=100?'🎉 完美！全員通關！':pct>=85?'✅ 達標！繼續保持':pct>=70?'📈 接近目標，加油衝刺':'⚡ 需要大力衝刺！'}</div>
       </div>
     </div>`;
 
-  // ── Target panel (inline editable)
+  // ── Player cards
+  if(md?.staffRows?.length){
+    const names=[...new Set(md.staffRows.map(r=>r.name))];
+    const N=names.length;
+    const fairShare=Math.round(100/N);
+    html+=`<div class="sv-sec"><div class="sv-sec-title">🎮 玩家個人進度 <span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0">· 公平分配每人 ${fairShare}%</span></div><div class="players-grid">`;
+
+    names.forEach((name,idx)=>{
+      const ptype=PLAYER_TYPE[idx%2];
+      const plbl=PLAYER_LABEL[idx%2];
+      const rows=md.staffRows.filter(r=>r.name===name);
+      const st={};
+      for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate')st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0);}
+      // weighted accRate
+      const mainK=['iphone','mac','ipad','watch'];
+      let an=0,ad=0;
+      for(const r of rows){const u=mainK.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
+      st.accRate=ad>0?Math.round(an/ad):0;
+
+      // Contribution: person's actual / store total (sales)  × 100
+      const totSales=calc?.tot?.sales||0;
+      const salesContrib=totSales>0?Math.round(st.sales/totSales*100):0;
+      // For each metric: person's actual / store target × 100%
+      const metricContribs={};
+      for(const mk of METRICS){
+        if(mk.key==='accRate'){metricContribs[mk.key]=st.accRate;continue;}
+        const tgtVal=targets[mk.key];
+        const totActual=calc?.tot?.[mk.key]||0;
+        // show as share of store total (always works even without target)
+        metricContribs[mk.key]=totActual>0?Math.round(st[mk.key]/totActual*100):0;
+      }
+
+      // Overall player contribution = sales contrib (main metric)
+      const mainPct=salesContrib;
+      // Position of character on track (capped at 100 for visual, but label shows real)
+      const trackPct=cap(mainPct,100);
+      const fairPct=cap(fairShare,100);
+      // Is above/below fair share?
+      const status=mainPct>=fairShare?'🌟 超額貢獻':'📌 持續加油';
+
+      // Build player card HTML
+      const initial=name[0]||'?';
+      html+=`
+        <div class="pcard ${ptype}">
+          <div class="pcard-top">
+            <!-- Character figure -->
+            <div class="char-wrap">
+              <div class="char-hat"></div>
+              <div class="char-head">${initial}</div>
+              <div class="char-body"></div>
+              <div class="char-arms">
+                <div class="char-arm"></div>
+                <div class="char-arm"></div>
+              </div>
+              <div class="char-legs">
+                <div class="char-leg"></div>
+                <div class="char-leg"></div>
+              </div>
+              <div class="char-type">${plbl}</div>
+            </div>
+            <!-- Info -->
+            <div class="pcard-info">
+              <div class="pcard-name">${name}</div>
+              <div class="pcard-contrib-row">
+                <div class="pcard-contrib-pct">${salesContrib}%</div>
+                <div class="pcard-contrib-lbl">銷售貢獻<br>${status}</div>
+              </div>
+              <!-- Main progress track with character ON it -->
+              <div class="pcard-track-wrap" style="padding-top:30px">
+                <div class="pcard-track">
+                  <div class="pcard-fill" style="width:${trackPct}%;position:relative">
+                    <!-- Mini character ON the track -->
+                    <div class="char-on-track" style="left:100%">
+                      <div class="char-mini-head">${initial}</div>
+                      <div class="char-mini-body"></div>
+                    </div>
+                  </div>
+                  <!-- Fair share marker -->
+                  <div class="fair-marker" style="left:${fairPct}%">
+                    <div class="fair-label">平均</div>
+                  </div>
+                  <!-- Finish line -->
+                  <div class="finish-line"><div class="finish-label">100%</div></div>
+                </div>
+                <div class="track-labels">
+                  <span class="track-lbl">0%</span>
+                  <span class="track-lbl" style="color:${ptype==='p1'?'var(--p1a)':'var(--p2a)'};font-weight:700">銷售貢獻 ${salesContrib}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Metric mini-bars -->
+          <div class="pcard-metrics">`;
+
+      // Show metric mini-bars (skip sales and accRate in grid, show accRate separately)
+      const showMetrics=['iphone','mac','ipad','watch','ac','accRate'];
+      for(const key of showMetrics){
+        const mk=METRICS.find(m=>m.key===key);
+        if(!mk)continue;
+        const val=st[key]||0;
+        const contrib=metricContribs[key]||0;
+        const barPct=key==='accRate'?cap(val):cap(contrib);
+        const dispVal=key==='accRate'?`${val}%`:`${val}${mk.unit}`;
+        html+=`
+          <div class="pm-row">
+            <span class="pm-lbl">${mk.lbl}</span>
+            <div class="pm-trk"><div class="pm-fill" style="width:${barPct}%;background:${mk.color}"></div></div>
+            <span class="pm-val">${dispVal}</span>
+          </div>`;
+      }
+      html+=`</div></div>`;
+    });
+    html+=`</div></div>`;
+  } else {
+    html+=`
+      <div class="sv-sec">
+        <div class="nodata">
+          <div class="nodata-icon">🎮</div>
+          <h3>尚無 ${MONTHS[m-1]} 業績資料</h3>
+          <p>先設定本月目標，再上傳業績 Excel 即可看到玩家進度</p>
+          <button class="tgt-save" onclick="document.getElementById('fileInp').click()" style="border:none;padding:10px 24px;cursor:pointer;border-radius:9px;">⬆ 上傳業績 Excel</button>
+        </div>
+      </div>`;
+  }
+
+  // ── Inline target panel
   html+=`
     <div class="sv-sec">
-      <div class="sv-sec-title">🎯 本月目標設定
-        <span id="tgt-saved-note" style="font-size:11px;font-weight:700;color:var(--green);margin-left:8px;display:none;">✓ 已儲存</span>
-      </div>
+      <div class="sv-sec-title">🎯 本月目標設定</div>
       <div class="tgt-panel">
         <div class="tgt-grid">`;
   for(const mk of METRICS){
@@ -528,91 +681,26 @@ function renderStageBody(m, calc, grade){
       </div>`;
   }
   html+=`</div>
-        <div class="tgt-row">
-          <span style="font-size:12px;color:var(--muted)">設定後資料將自動更新</span>
+        <div class="tgt-row-btn">
+          <span class="tgt-note">設定後重新整理關卡以套用計算</span>
           <button class="tgt-save" onclick="saveStageTgt(${m})">✅ 儲存目標</button>
         </div>
       </div>
     </div>`;
 
-  // ── Metrics
-  if(calc){
-    const {tot,rates}=calc;
-    html+=`<div class="sv-sec"><div class="sv-sec-title">📊 各項指標達成</div><div class="mcards">`;
-    for(const mk of METRICS){
-      const r=rates[mk.key],mg=gradeOf(r),mc=GRADE.color[mg]||'var(--muted)';
-      html+=`
-        <div class="mc" style="border-top:3px solid ${mk.color}">
-          <div class="mc-top"><span class="mc-name">${mk.lbl}</span><span class="mc-rate" style="color:${r!=null?mc:'var(--muted)'}">${r!=null?r+'%':'--'}</span></div>
-          <div class="mc-vals">
-            <span class="mc-actual">${mk.key==='sales'?fmtN(Math.round(tot[mk.key]||0)):Math.round(tot[mk.key]||0)}</span>
-            <span class="mc-unit">${mk.unit}</span>
-            ${targets[mk.key]?`<span class="mc-tgt">/ ${mk.key==='sales'?fmtN(targets[mk.key]):targets[mk.key]}${mk.unit}</span>`:''}
-          </div>
-          <div class="mc-trk"><div class="mc-fill" style="width:${cap(r)}%;background:${mk.color}"></div></div>
-        </div>`;
-    }
-    html+=`</div></div>`;
-
-    // ── Staff
-    const md=S.perf?.months?.[m];
-    if(md?.staffRows?.length){
-      const names=[...new Set(md.staffRows.map(r=>r.name))];
-      html+=`<div class="sv-sec"><div class="sv-sec-title">👥 個人業績</div><div class="staff-grid">`;
-      for(const name of names){
-        const rows=md.staffRows.filter(r=>r.name===name);
-        const st={};
-        for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate') st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0);}
-        const mk3=['iphone','mac','ipad','watch'];
-        let an2=0,ad2=0;
-        for(const r of rows){const u=mk3.reduce((s,k)=>s+(r[k]||0),0);an2+=(r.accRate||0)*u;ad2+=u;}
-        st.accRate=ad2>0?Math.round(an2/ad2):0;
-        const contrib=tot.sales>0?Math.round(st.sales/tot.sales*100):0;
-        html+=`
-          <div class="scard">
-            <div class="sav">${name[0]||'?'}</div>
-            <div class="sname">${name}</div>
-            <div class="scontrib">銷售貢獻 ${contrib}%</div>
-            <div class="sstats">
-              <div class="ss">iPhone <b>${st.iphone||0}</b></div>
-              <div class="ss">Mac <b>${st.mac||0}</b></div>
-              <div class="ss">iPad <b>${st.ipad||0}</b></div>
-              <div class="ss">Watch <b>${st.watch||0}</b></div>
-              <div class="ss">AC <b>${st.ac||0}</b></div>
-              <div class="ss">配件率 <b>${st.accRate}%</b></div>
-            </div>
-          </div>`;
-      }
-      html+=`</div></div>`;
-    }
-  } else {
-    html+=`
-      <div class="sv-sec">
-        <div class="nodata">
-          <div class="nodata-icon">📭</div>
-          <h3>尚無 ${MONTHS[m-1]} 業績資料</h3>
-          <p>請先設定目標，再上傳 Excel 業績檔</p>
-          <button class="tgt-save" style="width:auto;padding:10px 24px;" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績 Excel</button>
-        </div>
-      </div>`;
-  }
-
   body.innerHTML=html;
 }
 
 function saveStageTgt(m){
-  const tgts=loadTgts();
-  tgts[m]={};
+  const tgts=loadTgts();tgts[m]={};
   for(const mk of METRICS){const v=parseN($(`sv-inp-${mk.key}`)?.value);tgts[m][mk.key]=v;}
   saveTgts(tgts);
-  // Recalculate and re-render this stage
   const st=monthStatus(m),calc=calcMonth(m);
   const grade=st==='active'?'active':gradeOf(calc?.overall??null);
-  renderStageBody(m,calc,grade);
-  // Update header badge/bg
   $('sv-hdr').style.background=GRADE.bg[grade];
   $('sv-badge').textContent=GRADE.lbl[grade];
-  renderStages(); renderSummary();
+  renderStageBody(m,calc,grade);
+  renderStages();renderSummary();
   showToast(`✅ ${MONTHS[m-1]} 目標已儲存`,'ok');
 }
 
@@ -620,14 +708,12 @@ function goMap(){
   $('view-stage').classList.remove('v-on');
   $('view-map').classList.add('v-on');
   window.scrollTo(0,0);
-  renderStages(); renderSummary();
+  renderStages();renderSummary();
 }
 
-// ─── Target Modal (map-level) ────────────────────────
-let tModalMonth=1;
+// ── Target Modal ──────────────────────────────────
 function openTargetModal(m){
-  tModalMonth=m||1;
-  renderTabs(); selectTab(tModalMonth);
+  tModalMonth=m||1;renderTabs();selectTab(tModalMonth);
   $('tOverlay').classList.add('open');
 }
 function closeTargetModal(){$('tOverlay').classList.remove('open');}
@@ -640,7 +726,7 @@ function renderTabs(){
 }
 function selectTab(m){
   tModalMonth=m;
-  const tgts=loadTgts(),cur=tgts[m]||{};
+  const cur=loadTgts()[m]||{};
   $('tForm').innerHTML=METRICS.map(mk=>`
     <div class="inp-g">
       <label class="inp-lbl">${mk.tLbl}</label>
@@ -649,21 +735,20 @@ function selectTab(m){
   renderTabs();
 }
 function saveTargetModal(){
-  const tgts=loadTgts(); tgts[tModalMonth]={};
+  const tgts=loadTgts();tgts[tModalMonth]={};
   for(const mk of METRICS){const v=parseN($(`tinp-${mk.key}`)?.value);tgts[tModalMonth][mk.key]=v;}
-  saveTgts(tgts);
-  renderStages();renderSummary();renderTabs();
+  saveTgts(tgts);renderStages();renderSummary();renderTabs();
   showToast(`✅ ${MONTHS[tModalMonth-1]} 目標已儲存`,'ok');
 }
 
-// ─── Excel ──────────────────────────────────────────
+// ── Upload ────────────────────────────────────────
 function handleUpload(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
       const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      const find=names=>{for(const n of names)if(wb.Sheets[n])return wb.Sheets[n];return null;};
+      const find=ns=>{for(const n of ns)if(wb.Sheets[n])return wb.Sheets[n];return null;};
       const tSh=find(['目標','targets'])||wb.Sheets[wb.SheetNames[0]];
       const pSh=find(['業績','performance'])||wb.Sheets[wb.SheetNames[1]];
       if(!tSh||!pSh){showToast('找不到目標/業績工作表','err');return;}
@@ -682,7 +767,6 @@ function handleUpload(e){
       }
       S.perf={months};savePerf(S.perf);
       renderStages();renderSummary();
-      // If in stage view, refresh
       if($('view-stage').classList.contains('v-on')){
         const st=monthStatus(currentStage),calc=calcMonth(currentStage);
         const grade=st==='active'?'active':gradeOf(calc?.overall??null);
@@ -707,13 +791,9 @@ function dlTemplate(){
   XLSX.writeFile(wb,'門市業績範本.xlsx');
 }
 
-// ─── Year ────────────────────────────────────────────
 function setYear(y){S.year=y;$('mapLbl').textContent=y;S.perf=loadPerf();renderStages();renderSummary();}
-
-// ─── Toast ───────────────────────────────────────────
 function showToast(msg,type='ok'){const t=$('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3200);}
 
-// ─── Init ────────────────────────────────────────────
 function init(){
   const cy=new Date().getFullYear(),sel=$('yearSel');sel.innerHTML='';
   for(let y=cy-1;y<=cy+1;y++){const o=document.createElement('option');o.value=y;o.textContent=`${y} 年`;if(y===cy)o.selected=true;sel.appendChild(o);}
