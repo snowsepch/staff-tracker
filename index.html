@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎮 門市闖關儀表板</title>
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#ECF0FF;--card:#fff;--card2:#F4F7FF;--border:#DDE4F5;
@@ -14,9 +13,8 @@
   --green:#10B981;--blue:#3B82F6;
   --orange:#F97316;--red:#EF4444;--purple:#8B5CF6;--cyan:#06B6D4;
   --path:#C7D2F0;
-  /* Player palettes */
-  --p1a:#F97316;--p1b:#FBBF24;--p1c:#EA580C;   /* warrior: orange */
-  --p2a:#6366F1;--p2b:#818CF8;--p2c:#4F46E5;   /* mage: indigo */
+  --p1a:#F97316;--p1b:#FBBF24;--p1c:#EA580C;
+  --p2a:#6366F1;--p2b:#818CF8;--p2c:#4F46E5;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','PingFang TC',sans-serif;min-height:100vh;overflow-x:hidden;}
@@ -37,8 +35,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .btn-target:hover{background:#DDD6FE;}
 .btn-upload{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;}
 .btn-upload:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,158,11,.35);}
-.btn-dl{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
-.btn-dl:hover{color:var(--blue);border-color:var(--blue);}
 .file-inp{display:none;}
 .map-main{max-width:1120px;margin:0 auto;padding:24px;}
 
@@ -121,10 +117,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 /* ── PLAYER CARDS ─────────────────────────────── */
 .sv-sec{margin-bottom:20px;}
 .sv-sec-title{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
-
 .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
 
-/* Player card */
 .pcard{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px;border:2px solid transparent;position:relative;overflow:hidden;}
 .pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .pcard.p1{border-color:rgba(249,115,22,.2);}
@@ -132,43 +126,30 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .pcard.p2{border-color:rgba(99,102,241,.2);}
 .pcard.p2::before{background:linear-gradient(90deg,var(--p2a),var(--p2b));}
 
-/* Character figure */
 .pcard-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;}
 .char-wrap{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;}
-
-/* Hat */
 .char-hat{width:0;height:0;margin-bottom:-1px;}
 .p1 .char-hat{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid var(--p1b);}
 .p2 .char-hat{width:20px;height:12px;background:var(--p2b);border-radius:50% 50% 0 0;}
-
-/* Head */
 .char-head{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15);position:relative;flex-shrink:0;}
 .p1 .char-head{background:linear-gradient(145deg,var(--p1b),var(--p1a));}
 .p2 .char-head{background:linear-gradient(145deg,var(--p2b),var(--p2a));}
-/* Face dot eyes */
 .char-head::after{content:'';position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:10px;height:3px;background:rgba(255,255,255,.6);border-radius:2px;}
-
-/* Body */
 .char-body{width:28px;height:22px;border-radius:6px 6px 3px 3px;position:relative;margin-top:2px;}
 .p1 .char-body{background:var(--p1a);}
 .p2 .char-body{background:var(--p2a);}
-/* Arms */
 .char-arms{display:flex;gap:2px;margin-top:1px;}
 .char-arm{width:8px;height:14px;border-radius:4px;}
 .p1 .char-arm{background:var(--p1a);}
 .p2 .char-arm{background:var(--p2a);}
-/* Legs */
 .char-legs{display:flex;gap:4px;margin-top:2px;}
 .char-leg{width:10px;height:16px;border-radius:0 0 5px 5px;}
 .p1 .char-leg{background:var(--p1c);}
 .p2 .char-leg{background:var(--p2c);}
-
-/* Type label under char */
 .char-type{font-size:10px;font-weight:800;margin-top:5px;text-align:center;}
 .p1 .char-type{color:var(--p1a);}
 .p2 .char-type{color:var(--p2a);}
 
-/* Player info right of character */
 .pcard-info{flex:1;min-width:0;}
 .pcard-name{font-size:18px;font-weight:900;color:var(--text);line-height:1;margin-bottom:4px;}
 .pcard-contrib-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
@@ -177,13 +158,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .p2 .pcard-contrib-pct{color:var(--p2a);}
 .pcard-contrib-lbl{font-size:11px;color:var(--muted);line-height:1.3;}
 
-/* Main progress track with character ON it */
 .pcard-track-wrap{position:relative;margin-bottom:6px;margin-top:8px;}
 .pcard-track{height:14px;background:var(--border);border-radius:7px;overflow:visible;position:relative;}
 .pcard-fill{height:100%;border-radius:7px;transition:width .9s cubic-bezier(.4,0,.2,1);position:relative;}
 .p1 .pcard-fill{background:linear-gradient(90deg,var(--p1a),var(--p1b));}
 .p2 .pcard-fill{background:linear-gradient(90deg,var(--p2a),var(--p2b));}
-/* Character on track */
 .char-on-track{position:absolute;top:-26px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;}
 .char-mini-head{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .p1 .char-mini-head{background:linear-gradient(145deg,var(--p1b),var(--p1a));}
@@ -191,16 +170,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .char-mini-body{width:3px;height:6px;border-radius:0 0 2px 2px;}
 .p1 .char-mini-body{background:var(--p1a);}
 .p2 .char-mini-body{background:var(--p2a);}
-/* Fair share marker */
 .fair-marker{position:absolute;top:-8px;bottom:-8px;width:2px;background:rgba(0,0,0,.15);border-radius:1px;pointer-events:none;}
 .fair-label{position:absolute;top:-22px;transform:translateX(-50%);font-size:9px;color:var(--muted);white-space:nowrap;font-weight:700;background:var(--card);padding:0 3px;border-radius:3px;}
-/* 100% finish line */
 .finish-line{position:absolute;right:0;top:-8px;bottom:-8px;width:2px;background:var(--green);border-radius:1px;}
 .finish-label{position:absolute;right:0;top:-22px;font-size:9px;color:var(--green);font-weight:800;}
 .track-labels{display:flex;justify-content:space-between;margin-top:4px;}
 .track-lbl{font-size:10px;color:var(--muted);}
 
-/* Metric mini-bars */
 .pcard-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;border-top:1px solid var(--border);padding-top:14px;margin-top:6px;}
 .pm-row{display:flex;align-items:center;gap:5px;}
 .pm-lbl{font-size:10px;color:var(--muted);width:40px;flex-shrink:0;}
@@ -226,7 +202,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .nodata h3{font-size:17px;color:var(--text);margin-bottom:8px;}
 .nodata p{font-size:13px;color:var(--muted);margin-bottom:20px;}
 
-/* Target modal */
+/* Modals shared */
 .t-overlay{position:fixed;inset:0;background:rgba(20,30,80,.4);backdrop-filter:blur(5px);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;opacity:0;pointer-events:none;transition:opacity .2s;}
 .t-overlay.open{opacity:1;pointer-events:all;}
 .t-modal{background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:580px;max-height:calc(100vh - 56px);overflow-y:auto;transform:translateY(-18px);transition:transform .2s;}
@@ -287,6 +263,30 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.ok{border-left:4px solid var(--green);}
 .toast.err{border-left:4px solid var(--red);}
+
+/* ── PHOTO MODAL ── */
+.photo-modal{max-width:860px !important;}
+.photo-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.photo-drop{border:2.5px dashed var(--border);border-radius:14px;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--card2);overflow:hidden;position:relative;transition:border-color .2s;}
+.photo-drop:hover{border-color:var(--gold);}
+.photo-drop img{width:100%;height:100%;object-fit:contain;max-height:360px;display:none;}
+.photo-drop-hint{text-align:center;padding:32px;pointer-events:none;}
+.photo-note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.4;}
+.photo-form-col{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:480px;padding-right:4px;}
+.photo-month-row{display:flex;align-items:center;gap:10px;}
+.photo-month-row label{font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;}
+.photo-month-sel{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);outline:none;}
+.photo-staff-row{background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px;position:relative;}
+.photo-staff-row .rm-btn{position:absolute;top:7px;right:8px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:2px 5px;border-radius:5px;}
+.photo-staff-row .rm-btn:hover{color:var(--red);}
+.photo-staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.add-staff-btn{background:var(--card2);border:1.5px dashed var(--border);border-radius:9px;padding:9px;font-size:13px;color:var(--muted);cursor:pointer;font-weight:700;transition:all .15s;}
+.add-staff-btn:hover{border-color:var(--purple);color:var(--purple);}
+@media(max-width:640px){
+  .photo-layout{grid-template-columns:1fr;}
+  .photo-drop{min-height:180px;}
+}
+
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 @media(max-width:700px){
   .stage-grid{grid-template-columns:repeat(3,1fr);}
@@ -314,9 +314,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
     <div class="hdr-right">
       <select class="year-sel" id="yearSel" onchange="setYear(+this.value)"></select>
       <button class="btn btn-target" onclick="openTargetModal()">📋 設定月份目標</button>
-      <button class="btn btn-upload" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績 Excel</button>
-      <button class="btn btn-dl" onclick="dlTemplate()">⬇ 範本</button>
-      <input type="file" id="fileInp" class="file-inp" accept=".xlsx,.xls" onchange="handleUpload(event)">
+      <button class="btn btn-upload" onclick="openPhotoModal()">📷 上傳照片記錄</button>
     </div>
   </header>
   <main class="map-main">
@@ -328,9 +326,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
         <div class="mini-title">各指標年度平均</div>
         <div class="mini-grid">
           <div class="mini-row"><span class="mini-lbl">銷售額</span><div class="mini-trk"><div class="mini-fill" id="mf0" style="background:var(--gold)"></div></div><span class="mini-val" id="mv0">--</span></div>
-          <div class="mini-row"><span class="mini-lbl">AppleCare</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--green)"></div></div><span class="mini-val" id="mv1">--</span></div>
-          <div class="mini-row"><span class="mini-lbl">配件率</span><div class="mini-trk"><div class="mini-fill" id="mf2" style="background:var(--blue)"></div></div><span class="mini-val" id="mv2">--</span></div>
-          <div class="mini-row"><span class="mini-lbl">主商品</span><div class="mini-trk"><div class="mini-fill" id="mf3" style="background:var(--purple)"></div></div><span class="mini-val" id="mv3">--</span></div>
+          <div class="mini-row"><span class="mini-lbl">配件率</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--blue)"></div></div><span class="mini-val" id="mv1">--</span></div>
+          <div class="mini-row"><span class="mini-lbl">主商品</span><div class="mini-trk"><div class="mini-fill" id="mf2" style="background:var(--purple)"></div></div><span class="mini-val" id="mv2">--</span></div>
         </div>
       </div>
     </div>
@@ -368,13 +365,50 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
     </div>
     <div class="sv-acts">
       <button class="sv-btn" onclick="openTargetModal(currentStage)">📋 設定本月目標</button>
-      <button class="sv-btn" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績</button>
+      <button class="sv-btn" onclick="openPhotoModal(currentStage)">📷 上傳照片</button>
     </div>
   </div>
   <div class="sv-body" id="sv-body"></div>
 </div>
 
 </div><!-- #app -->
+
+<!-- PHOTO UPLOAD MODAL -->
+<div class="t-overlay" id="photoOverlay" onclick="if(event.target===this)closePhotoModal()">
+  <div class="t-modal photo-modal">
+    <div class="t-head">
+      <div class="t-title">📷 上傳照片記錄業績</div>
+      <button class="close-btn" onclick="closePhotoModal()">✕</button>
+    </div>
+    <div class="t-body">
+      <div class="photo-layout">
+        <!-- Photo area -->
+        <div>
+          <div class="photo-drop" id="photoDrop" onclick="document.getElementById('photoFileInp').click()">
+            <div class="photo-drop-hint" id="photoHint">
+              <div style="font-size:44px;margin-bottom:10px">📷</div>
+              <div style="font-size:13px;color:var(--muted);font-weight:700">點擊上傳照片</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">業績截圖 / 報表拍照</div>
+            </div>
+            <img id="photoPreview" alt="業績照片">
+          </div>
+          <input type="file" id="photoFileInp" class="file-inp" accept="image/*" onchange="previewPhoto(event)">
+          <div class="photo-note">照片僅供本次對照參考，不會儲存圖片內容</div>
+        </div>
+        <!-- Entry form -->
+        <div class="photo-form-col">
+          <div class="photo-month-row">
+            <label>月份</label>
+            <select class="photo-month-sel" id="photoMonth"></select>
+          </div>
+          <div id="photoStaffRows"></div>
+          <button class="add-staff-btn" onclick="addPhotoStaffRow()">+ 新增人員</button>
+          <button class="save-btn" onclick="savePhotoData()">✅ 儲存業績記錄</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- TARGET MODAL -->
 <div class="t-overlay" id="tOverlay" onclick="if(event.target===this)closeTargetModal()">
@@ -398,13 +432,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 // ── Constants ─────────────────────────────────────
 const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 const METRICS=[
-  {key:'sales',   lbl:'銷售額',    tLbl:'銷售額目標（元）',    unit:'元', color:'#F59E0B'},
-  {key:'accRate', lbl:'配件率',    tLbl:'配件率目標（%）',     unit:'%',  color:'#3B82F6'},
-  {key:'ac',      lbl:'AppleCare', tLbl:'AppleCare 目標（台）',unit:'台', color:'#10B981'},
-  {key:'iphone',  lbl:'iPhone',    tLbl:'iPhone 目標（台）',   unit:'台', color:'#8B5CF6'},
-  {key:'mac',     lbl:'Mac',       tLbl:'Mac 目標（台）',      unit:'台', color:'#F97316'},
-  {key:'ipad',    lbl:'iPad',      tLbl:'iPad 目標（台）',     unit:'台', color:'#06B6D4'},
-  {key:'watch',   lbl:'Watch',     tLbl:'Watch 目標（台）',    unit:'台', color:'#EF4444'},
+  {key:'sales',    lbl:'銷售額',    tLbl:'銷售額目標（元）',     unit:'元', color:'#F59E0B'},
+  {key:'accRate',  lbl:'配件率',    tLbl:'配件率目標（%）',      unit:'%',  color:'#3B82F6'},
+  {key:'iphone',   lbl:'iPhone',    tLbl:'iPhone 目標（台）',    unit:'台', color:'#8B5CF6'},
+  {key:'mac',      lbl:'Mac',       tLbl:'Mac 目標（台）',       unit:'台', color:'#F97316'},
+  {key:'ipad',     lbl:'iPad',      tLbl:'iPad 目標（台）',      unit:'台', color:'#06B6D4'},
+  {key:'watch',    lbl:'Watch',     tLbl:'Watch 目標（台）',     unit:'台', color:'#EF4444'},
+  {key:'ac',       lbl:'AppleCare', tLbl:'AppleCare 目標（台）', unit:'台', color:'#10B981'},
+  {key:'justCare', lbl:'Just Care', tLbl:'Just Care 目標（台）', unit:'台', color:'#EC4899'},
 ];
 const DOM_ORDER=[1,2,3,4,8,7,6,5,9,10,11,12];
 const GRADE={
@@ -524,13 +559,12 @@ function drawPath(){
 
 function renderSummary(){
   const now=new Date();let cleared=0;
-  const oA=[],sR=[],aR=[],acR=[],mR=[];
+  const oA=[],sR=[],aR=[],mR=[];
   for(let m=1;m<=12;m++){
     const c=calcMonth(m);if(!c||c.overall==null)continue;
     oA.push(c.overall);if(c.overall>=100)cleared++;
     if(c.rates.sales!=null)sR.push(c.rates.sales);
     if(c.rates.accRate!=null)aR.push(c.rates.accRate);
-    if(c.rates.ac!=null)acR.push(c.rates.ac);
     if(c.mainAvg!=null)mR.push(c.mainAvg);
   }
   const avg=r=>r.length?Math.round(r.reduce((a,b)=>a+b,0)/r.length):null;
@@ -538,7 +572,7 @@ function renderSummary(){
   $('sCleared').textContent=cleared;
   $('sAvg').textContent=oA.length?`${avg(oA)}%`:'--';
   $('sActive').textContent=(S.year===new Date().getFullYear())?`${now.getMonth()+1}月`:'--';
-  setBar('mf0','mv0',sR);setBar('mf1','mv1',acR);setBar('mf2','mv2',aR);setBar('mf3','mv3',mR);
+  setBar('mf0','mv0',sR);setBar('mf1','mv1',aR);setBar('mf2','mv2',mR);
 }
 
 // ── Stage View ────────────────────────────────────
@@ -593,10 +627,8 @@ function renderStageBody(m,calc,grade){
   const slBg=grade==='s'?'#FFFBEB':grade==='a'?'#ECFDF5':grade==='b'?'#EFF6FF':grade==='c'?'#FFF7ED':grade==='d'?'#FEF2F2':'#F4F7FF';
   let html='';
 
-  // ── Store dialogue banner
   if(storeLine) html+=`<div class="store-line" style="background:${slBg};border-color:${slBorder};color:${slBorder}">${storeLine}</div>`;
 
-  // ── Store overall hero
   const heroCls=grade==='d'?'hero-danger':(grade==='s'||grade==='a')?'hero-celebrate':'';
   html+=`
     <div class="sv-hero ${heroCls}" style="border-top:4px solid ${gc};position:relative;overflow:hidden">
@@ -606,11 +638,10 @@ function renderStageBody(m,calc,grade){
       <div class="hero-right">
         <div class="hero-lbl">門市整體達成率 · STAGE ${m} ${MONTHS[m-1]}</div>
         <div class="hero-bar-trk"><div class="hero-bar-fill" style="width:${cap(pct)}%;background:${gc}"></div></div>
-        <div class="hero-sub">${pct==null?'尚無業績資料，請設定目標並上傳 Excel':pct>=100?'🎉 完美！全員通關！':pct>=85?'✅ 達標！繼續保持':pct>=70?'📈 接近目標，加油衝刺':'⚡ 需要大力衝刺！'}</div>
+        <div class="hero-sub">${pct==null?'尚無業績資料，請設定目標並上傳照片記錄':pct>=100?'🎉 完美！全員通關！':pct>=85?'✅ 達標！繼續保持':pct>=70?'📈 接近目標，加油衝刺':'⚡ 需要大力衝刺！'}</div>
       </div>
     </div>`;
 
-  // ── Player cards
   if(md?.staffRows?.length){
     const names=[...new Set(md.staffRows.map(r=>r.name))];
     const N=names.length;
@@ -623,76 +654,53 @@ function renderStageBody(m,calc,grade){
       const rows=md.staffRows.filter(r=>r.name===name);
       const st={};
       for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate')st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0);}
-      // weighted accRate
       const mainK=['iphone','mac','ipad','watch'];
       let an=0,ad=0;
       for(const r of rows){const u=mainK.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
       st.accRate=ad>0?Math.round(an/ad):0;
 
-      // Contribution: person's actual / store total (sales)  × 100
       const totSales=calc?.tot?.sales||0;
       const salesContrib=totSales>0?Math.round(st.sales/totSales*100):0;
-      // For each metric: person's actual / store target × 100%
       const metricContribs={};
       for(const mk of METRICS){
         if(mk.key==='accRate'){metricContribs[mk.key]=st.accRate;continue;}
-        const tgtVal=targets[mk.key];
         const totActual=calc?.tot?.[mk.key]||0;
-        // show as share of store total (always works even without target)
         metricContribs[mk.key]=totActual>0?Math.round(st[mk.key]/totActual*100):0;
       }
 
-      // Overall player contribution = sales contrib (main metric)
-      const mainPct=salesContrib;
-      // Position of character on track (capped at 100 for visual, but label shows real)
-      const trackPct=cap(mainPct,100);
+      const trackPct=cap(salesContrib,100);
       const fairPct=cap(fairShare,100);
-      // Is above/below fair share?
-      const status=mainPct>=fairShare?'🌟 超額貢獻':'📌 持續加油';
-
-      // Build player card HTML
+      const status=salesContrib>=fairShare?'🌟 超額貢獻':'📌 持續加油';
       const initial=name[0]||'?';
       const dialogue=getDialogue(salesContrib,fairShare,idx%2);
       html+=`
         <div class="pcard ${ptype}">
           <div class="pcard-top">
-            <!-- Character figure + speech bubble -->
             <div class="char-wrap">
               <div class="speech-bubble">${dialogue}</div>
               <div class="char-hat"></div>
               <div class="char-head">${initial}</div>
               <div class="char-body"></div>
-              <div class="char-arms">
-                <div class="char-arm"></div>
-                <div class="char-arm"></div>
-              </div>
-              <div class="char-legs">
-                <div class="char-leg"></div>
-                <div class="char-leg"></div>
-              </div>
+              <div class="char-arms"><div class="char-arm"></div><div class="char-arm"></div></div>
+              <div class="char-legs"><div class="char-leg"></div><div class="char-leg"></div></div>
               <div class="char-type">${plbl}</div>
             </div>
-            <!-- Info -->
             <div class="pcard-info">
               <div class="pcard-name">${name}</div>
               <div class="pcard-contrib-row">
                 <div class="pcard-contrib-pct">${salesContrib}%</div>
                 <div class="pcard-contrib-lbl">銷售貢獻<br>${status}</div>
               </div>
-              <!-- Main progress track with character ON it -->
               <div class="pcard-track-wrap" style="padding-top:34px">
                 <div class="pcard-track" style="overflow:visible;position:relative">
                   <div class="pcard-fill" style="width:${trackPct}%"></div>
-                  <!-- Character on track (outside fill, so shimmer still works) -->
                   <div class="char-on-track" style="position:absolute;top:-30px;left:${trackPct}%">
                     <div class="char-mini-head">${initial}</div>
                     <div class="char-mini-body"></div>
                   </div>
-                  <!-- Fair share marker -->
                   <div class="fair-marker" style="left:${fairPct}%">
                     <div class="fair-label">平均</div>
                   </div>
-                  <!-- Finish line -->
                   <div class="finish-line"><div class="finish-label">100%</div></div>
                 </div>
                 <div class="track-labels">
@@ -702,11 +710,9 @@ function renderStageBody(m,calc,grade){
               </div>
             </div>
           </div>
-          <!-- Metric mini-bars -->
           <div class="pcard-metrics">`;
 
-      // Show metric mini-bars (skip sales and accRate in grid, show accRate separately)
-      const showMetrics=['iphone','mac','ipad','watch','ac','accRate'];
+      const showMetrics=['iphone','mac','ipad','watch','ac','justCare','accRate'];
       for(const key of showMetrics){
         const mk=METRICS.find(m=>m.key===key);
         if(!mk)continue;
@@ -725,25 +731,14 @@ function renderStageBody(m,calc,grade){
     });
     html+=`</div></div>`;
   } else {
-    // idle placeholder characters
-    const idleChars=[{type:'p1',icon:'⚔️',lbl:'戰士',clr:'#F97316'},{type:'p2',icon:'🔮',lbl:'法師',clr:'#6366F1'}];
+    const idleChars=[{type:'p1',icon:'⚔️',lbl:'戰士'},{type:'p2',icon:'🔮',lbl:'法師'}];
     let idleHtml=`<div class="sv-sec"><div class="sv-sec-title">🎮 玩家個人進度</div><div class="players-grid">`;
     idleChars.forEach(c=>{
       idleHtml+=`
       <div class="pcard ${c.type}" style="opacity:0.65">
         <div class="speech-bubble" style="background:#e2e8f0;color:#64748b;border-color:#cbd5e1">等待任務中… 💤</div>
-        <div class="char-figure">
-          <div class="char-hat ${c.type}-hat"></div>
-          <div class="char-head">${c.icon}</div>
-          <div class="char-body ${c.type}-body"></div>
-          <div class="char-arms"></div>
-          <div class="char-legs"></div>
-        </div>
         <div class="pcard-name">${c.lbl}</div>
-        <div class="pcard-track" style="position:relative">
-          <div class="pcard-fill" style="width:0%"></div>
-        </div>
-        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:4px">上傳業績後解鎖</div>
+        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:8px">上傳照片記錄後解鎖</div>
       </div>`;
     });
     idleHtml+=`</div></div>`;
@@ -751,15 +746,14 @@ function renderStageBody(m,calc,grade){
     html+=`
       <div class="sv-sec">
         <div class="nodata">
-          <div class="nodata-icon">🎮</div>
+          <div class="nodata-icon">📷</div>
           <h3>尚無 ${MONTHS[m-1]} 業績資料</h3>
-          <p>先設定本月目標，再上傳業績 Excel 即可看到玩家進度</p>
-          <button class="tgt-save" onclick="document.getElementById('fileInp').click()" style="border:none;padding:10px 24px;cursor:pointer;border-radius:9px;">⬆ 上傳業績 Excel</button>
+          <p>先設定本月目標，再上傳照片對照填入數字</p>
+          <button class="tgt-save" onclick="openPhotoModal(${m})" style="border:none;padding:10px 24px;cursor:pointer;border-radius:9px;">📷 上傳照片記錄</button>
         </div>
       </div>`;
   }
 
-  // ── Inline target panel
   html+=`
     <div class="sv-sec">
       <div class="sv-sec-title">🎯 本月目標設定</div>
@@ -834,56 +828,124 @@ function saveTargetModal(){
   showToast(`✅ ${MONTHS[tModalMonth-1]} 目標已儲存`,'ok');
 }
 
-// ── Upload ────────────────────────────────────────
-function handleUpload(e){
-  const file=e.target.files[0];if(!file)return;
+// ── Photo Modal ───────────────────────────────────
+function openPhotoModal(m){
+  const sel=$('photoMonth');
+  const cur=m||new Date().getMonth()+1;
+  sel.innerHTML=MONTHS.map((lbl,i)=>`<option value="${i+1}"${i+1===cur?' selected':''}>${lbl}</option>`).join('');
+  $('photoStaffRows').innerHTML='';
+  addPhotoStaffRow();
+  // Reset photo area
+  $('photoPreview').style.display='none';
+  $('photoPreview').src='';
+  $('photoHint').style.display='';
+  $('photoFileInp').value='';
+  $('photoOverlay').classList.add('open');
+}
+
+function closePhotoModal(){$('photoOverlay').classList.remove('open');}
+
+function previewPhoto(event){
+  const file=event.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      const find=ns=>{for(const n of ns)if(wb.Sheets[n])return wb.Sheets[n];return null;};
-      const tSh=find(['目標','targets'])||wb.Sheets[wb.SheetNames[0]];
-      const pSh=find(['業績','performance'])||wb.Sheets[wb.SheetNames[1]];
-      if(!tSh||!pSh){showToast('找不到目標/業績工作表','err');return;}
-      const tgts=loadTgts();
-      for(const row of XLSX.utils.sheet_to_json(tSh,{defval:''})){
-        const m=parseInt(row['月份']||row['月']||0);if(m<1||m>12)continue;
-        tgts[m]={sales:parseN(row['銷售額目標']||row['銷售額']),accRate:parseN(row['配件率目標%']||row['配件率目標']||row['配件率']),ac:parseN(row['AC目標']||row['AppleCare目標']||row['AC']),iphone:parseN(row['iPhone目標']||row['iPhone']),mac:parseN(row['Mac目標']||row['Mac']),ipad:parseN(row['iPad目標']||row['iPad']),watch:parseN(row['Watch目標']||row['Watch'])};
-      }
-      saveTgts(tgts);
-      const months={};
-      for(const row of XLSX.utils.sheet_to_json(pSh,{defval:''})){
-        const m=parseInt(row['月份']||row['月']||0),name=String(row['姓名']||row['name']||'').trim();
-        if(m<1||m>12||!name)continue;
-        months[m]=months[m]||{staffRows:[]};
-        months[m].staffRows.push({name,sales:parseN(row['銷售額']),accRate:parseN(row['配件率%']||row['配件率']),ac:parseN(row['AC']||row['AppleCare']),iphone:parseN(row['iPhone']),mac:parseN(row['Mac']),ipad:parseN(row['iPad']),watch:parseN(row['Watch'])});
-      }
-      S.perf={months};savePerf(S.perf);
-      renderStages();renderSummary();
-      if($('view-stage').classList.contains('v-on')){
-        const st=monthStatus(currentStage),calc=calcMonth(currentStage);
-        const grade=st==='active'?'active':gradeOf(calc?.overall??null);
-        renderStageBody(currentStage,calc,grade);
-      }
-      showToast('✅ 業績資料載入成功！','ok');
-    }catch(err){showToast('讀取失敗：'+err.message,'err');console.error(err);}
-    e.target.value='';
+  reader.onload=e=>{
+    const img=$('photoPreview');
+    img.src=e.target.result;
+    img.style.display='block';
+    $('photoHint').style.display='none';
   };
-  reader.readAsArrayBuffer(file);
+  reader.readAsDataURL(file);
 }
 
-function dlTemplate(){
-  const wb=XLSX.utils.book_new();
-  const tD=[['月份','銷售額目標','配件率目標%','AC目標','iPhone目標','Mac目標','iPad目標','Watch目標']];
-  for(let m=1;m<=12;m++)tD.push([m,'','','','','','','']);
-  const tS=XLSX.utils.aoa_to_sheet(tD);tS['!cols']=[{wch:6},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:8},{wch:8}];
-  XLSX.utils.book_append_sheet(wb,tS,'目標');
-  const pD=[['月份','姓名','銷售額','配件率%','AC','iPhone','Mac','iPad','Watch'],[1,'專員A','','','','','','',''],[1,'專員B','','','','','','','']];
-  const pS=XLSX.utils.aoa_to_sheet(pD);pS['!cols']=[{wch:6},{wch:8},{wch:10},{wch:8},{wch:6},{wch:8},{wch:6},{wch:6},{wch:8}];
-  XLSX.utils.book_append_sheet(wb,pS,'業績');
-  XLSX.writeFile(wb,'門市業績範本.xlsx');
+function addPhotoStaffRow(){
+  const container=$('photoStaffRows');
+  const div=document.createElement('div');
+  div.className='photo-staff-row';
+  div.innerHTML=`
+    <button class="rm-btn" onclick="removePhotoStaffRow(this)">✕</button>
+    <div class="photo-staff-grid">
+      <div class="inp-g" style="grid-column:1/-1">
+        <label class="inp-lbl">姓名</label>
+        <input class="inp-f photo-name" type="text" placeholder="輸入姓名">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">銷售額（元）</label>
+        <input class="inp-f photo-sales" type="number" min="0" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">配件率（%）</label>
+        <input class="inp-f photo-accRate" type="number" min="0" step="0.1" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">iPhone（台）</label>
+        <input class="inp-f photo-iphone" type="number" min="0" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">Mac（台）</label>
+        <input class="inp-f photo-mac" type="number" min="0" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">iPad（台）</label>
+        <input class="inp-f photo-ipad" type="number" min="0" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">Watch（台）</label>
+        <input class="inp-f photo-watch" type="number" min="0" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">AppleCare（台）</label>
+        <input class="inp-f photo-ac" type="number" min="0" placeholder="0">
+      </div>
+      <div class="inp-g">
+        <label class="inp-lbl">Just Care（台）</label>
+        <input class="inp-f photo-justCare" type="number" min="0" placeholder="0">
+      </div>
+    </div>`;
+  container.appendChild(div);
 }
 
+function removePhotoStaffRow(btn){
+  const rows=document.querySelectorAll('.photo-staff-row');
+  if(rows.length>1) btn.closest('.photo-staff-row').remove();
+}
+
+function savePhotoData(){
+  const m=parseInt($('photoMonth').value);
+  const rows=document.querySelectorAll('.photo-staff-row');
+  const staffRows=[];
+  for(const row of rows){
+    const name=row.querySelector('.photo-name').value.trim();
+    if(!name)continue;
+    staffRows.push({
+      name,
+      sales:parseN(row.querySelector('.photo-sales').value),
+      accRate:parseN(row.querySelector('.photo-accRate').value),
+      iphone:parseN(row.querySelector('.photo-iphone').value),
+      mac:parseN(row.querySelector('.photo-mac').value),
+      ipad:parseN(row.querySelector('.photo-ipad').value),
+      watch:parseN(row.querySelector('.photo-watch').value),
+      ac:parseN(row.querySelector('.photo-ac').value),
+      justCare:parseN(row.querySelector('.photo-justCare').value)
+    });
+  }
+  if(!staffRows.length){showToast('請至少輸入一位人員資料','err');return;}
+  if(!S.perf)S.perf={months:{}};
+  if(!S.perf.months)S.perf.months={};
+  S.perf.months[m]={staffRows};
+  savePerf(S.perf);
+  renderStages();renderSummary();
+  if($('view-stage').classList.contains('v-on')&&currentStage===m){
+    const st=monthStatus(m),calc=calcMonth(m);
+    const grade=st==='active'?'active':gradeOf(calc?.overall??null);
+    $('sv-hdr').style.background=GRADE.bg[grade];
+    $('sv-badge').textContent=GRADE.lbl[grade];
+    renderStageBody(m,calc,grade);
+  }
+  closePhotoModal();
+  showToast(`✅ ${MONTHS[m-1]} 業績資料已儲存`,'ok');
+}
+
+// ── Misc ──────────────────────────────────────────
 function setYear(y){S.year=y;$('mapLbl').textContent=y;S.perf=loadPerf();renderStages();renderSummary();}
 function showToast(msg,type='ok'){const t=$('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3200);}
 
