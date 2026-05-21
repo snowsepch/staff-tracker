@@ -6,34 +6,34 @@
 <title>🎮 門市闖關儀表板</title>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <style>
-:root {
-  --bg: #ECF0FF;
-  --card: #FFFFFF;
-  --card2: #F4F7FF;
-  --border: #DDE4F5;
-  --text: #1A2240;
-  --text2: #3A4870;
-  --muted: #7A8DB0;
-  --shadow: 0 2px 14px rgba(50,80,180,.08);
-  --shadow-lg: 0 8px 32px rgba(50,80,180,.13);
-  --gold:#F59E0B; --gold2:#FBBF24;
-  --green:#10B981; --green2:#34D399;
-  --blue:#3B82F6; --blue2:#60A5FA;
-  --orange:#F97316; --orange2:#FB923C;
-  --red:#EF4444;   --red2:#F87171;
-  --purple:#8B5CF6;
-  --cyan:#06B6D4;
+:root{
+  --bg:#ECF0FF;--card:#fff;--card2:#F4F7FF;--border:#DDE4F5;
+  --text:#1A2240;--text2:#3A4870;--muted:#7A8DB0;
+  --shadow:0 2px 14px rgba(50,80,180,.08);--shadow-lg:0 8px 32px rgba(50,80,180,.13);
+  --gold:#F59E0B;--gold2:#FBBF24;
+  --green:#10B981;--green2:#34D399;
+  --blue:#3B82F6;--blue2:#60A5FA;
+  --orange:#F97316;--orange2:#FB923C;
+  --red:#EF4444;--purple:#8B5CF6;--cyan:#06B6D4;
   --path:#C7D2F0;
+  --acc:var(--blue); /* active accent, overridden per grade */
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','PingFang TC',sans-serif;min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','PingFang TC',sans-serif;min-height:100vh;overflow-x:hidden;}
 
-/* ── HEADER ── */
-.hdr{background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
-.hdr-brand{display:flex;align-items:center;gap:10px;}
-.hdr-icon{font-size:26px;}
-.hdr-title{font-size:17px;font-weight:900;color:var(--text);letter-spacing:-.02em;}
-.hdr-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+/* ── VIEW MANAGEMENT ── */
+#app{position:relative;min-height:100vh;}
+.view{width:100%;min-height:100vh;display:none;}
+.view.v-on{display:block;}
+
+/* ════════════════════════════════════════
+   MAP VIEW
+════════════════════════════════════════ */
+#view-map .hdr{background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-icon{font-size:26px;}
+.brand-title{font-size:17px;font-weight:900;color:var(--text);}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:1px;}
 .hdr-right{display:flex;align-items:center;gap:8px;}
 .year-sel{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);cursor:pointer;outline:none;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;white-space:nowrap;}
@@ -45,11 +45,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .btn-dl:hover{color:var(--blue);border-color:var(--blue);}
 .file-inp{display:none;}
 
-/* ── MAIN ── */
-.main{max-width:1120px;margin:0 auto;padding:24px;}
+.map-main{max-width:1120px;margin:0 auto;padding:24px;}
 
-/* ── SUMMARY CARD ── */
-.sum-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 28px;display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:0;align-items:center;margin-bottom:18px;}
+/* Summary card */
+.sum-card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 28px;display:grid;grid-template-columns:repeat(3,auto) 1fr;align-items:center;margin-bottom:18px;}
 .stat-col{text-align:center;padding:0 28px;border-right:1px solid var(--border);}
 .stat-col:first-child{padding-left:0;}
 .stat-col:last-of-type{border-right:none;}
@@ -64,24 +63,21 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .mini-fill{height:100%;border-radius:3px;transition:width .8s ease;}
 .mini-val{font-size:11px;font-weight:700;color:var(--text2);width:34px;text-align:right;}
 
-/* ── MAP CARD ── */
+/* Map card */
 .map-card{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);padding:28px 28px 24px;position:relative;overflow:hidden;}
-.map-card::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1.2' fill='%23D0D8F0' fill-opacity='.55'/%3E%3C/svg%3E");pointer-events:none;}
-.map-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;position:relative;}
+.map-card::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1.2' fill='%23C7D2F0' fill-opacity='.5'/%3E%3C/svg%3E");pointer-events:none;}
+.map-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;}
 .map-ttl{font-size:16px;font-weight:900;color:var(--text);display:flex;align-items:center;gap:8px;}
 .map-hint{font-size:12px;color:var(--muted);margin-top:4px;}
 
-/* Stage world wrapper - position relative so SVG path can overlay */
 .stage-world{position:relative;}
 .stage-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 12px;position:relative;z-index:1;}
 
-/* ── STAGE NODE ── */
-.snode{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;border-radius:16px;padding:4px 2px;transition:transform .2s;position:relative;}
-.snode:hover:not(.locked){transform:translateY(-5px);}
-.snode.locked{cursor:default;opacity:.45;}
-
-/* The orb */
-.orb{width:80px;height:80px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;transition:box-shadow .2s;border:3px solid transparent;}
+/* Stage node */
+.snode{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;border-radius:16px;padding:6px 4px;transition:transform .2s;position:relative;}
+.snode:hover:not(.locked){transform:translateY(-6px);}
+.snode.locked{cursor:default;opacity:.4;}
+.orb{width:84px;height:84px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;transition:box-shadow .2s;border:3px solid transparent;}
 .orb-s {background:linear-gradient(145deg,#FBBF24,#F59E0B);border-color:#D97706;color:#fff;}
 .orb-a {background:linear-gradient(145deg,#34D399,#10B981);border-color:#059669;color:#fff;}
 .orb-b {background:linear-gradient(145deg,#60A5FA,#3B82F6);border-color:#2563EB;color:#fff;}
@@ -89,24 +85,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .orb-d {background:linear-gradient(145deg,#F87171,#EF4444);border-color:#DC2626;color:#fff;}
 .orb-active{background:linear-gradient(145deg,#FEF3C7,#FDE68A);border-color:var(--orange);color:var(--orange);animation:orb-pulse 2.2s ease-in-out infinite;}
 .orb-locked{background:linear-gradient(145deg,#F1F5F9,#E2E8F0);border-color:#CBD5E1;color:#94A3B8;}
-
-.snode:hover:not(.locked) .orb{box-shadow:0 8px 28px rgba(0,0,0,.18);}
-.orb-s:hover,.orb-s.h{box-shadow:0 8px 28px rgba(245,158,11,.45)!important;}
-.orb-a:hover,.orb-a.h{box-shadow:0 8px 28px rgba(16,185,129,.4)!important;}
-.orb-b:hover,.orb-b.h{box-shadow:0 8px 28px rgba(59,130,246,.4)!important;}
-.orb-c:hover,.orb-c.h{box-shadow:0 8px 28px rgba(249,115,22,.4)!important;}
-.orb-d:hover,.orb-d.h{box-shadow:0 8px 28px rgba(239,68,68,.4)!important;}
-
-@keyframes orb-pulse{
-  0%,100%{box-shadow:0 4px 16px rgba(249,115,22,.2),0 0 0 0 rgba(249,115,22,.3);}
-  50%{box-shadow:0 4px 16px rgba(249,115,22,.3),0 0 0 12px rgba(249,115,22,0);}
-}
-
+.snode:hover:not(.locked) .orb{box-shadow:0 10px 30px rgba(0,0,0,.18);}
+@keyframes orb-pulse{0%,100%{box-shadow:0 4px 16px rgba(249,115,22,.2),0 0 0 0 rgba(249,115,22,.35);}50%{box-shadow:0 4px 16px rgba(249,115,22,.3),0 0 0 14px rgba(249,115,22,0);}}
 .orb-num{font-size:9px;font-weight:800;opacity:.75;letter-spacing:.05em;line-height:1;}
 .orb-icon{font-size:22px;line-height:1;}
-.orb-pct{font-size:13px;font-weight:900;line-height:1;}
-
-/* Stage label */
+.orb-pct{font-size:14px;font-weight:900;line-height:1;}
 .slabel{text-align:center;}
 .smonth{font-size:13px;font-weight:700;color:var(--text);}
 .stag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:3px;}
@@ -117,16 +100,91 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .tag-d{background:#FEE2E2;color:#DC2626;}
 .tag-active{background:#FFEDD5;color:#EA580C;}
 .tag-locked{background:#F1F5F9;color:#94A3B8;}
-
-/* No-target indicator on node */
-.no-tgt-dot{width:8px;height:8px;border-radius:50%;background:#E2E8F0;border:1.5px solid #94A3B8;position:absolute;top:6px;right:6px;}
-.has-tgt-dot{width:8px;height:8px;border-radius:50%;background:var(--green);position:absolute;top:6px;right:6px;}
+.tgt-dot{width:8px;height:8px;border-radius:50%;position:absolute;top:6px;right:6px;}
+.dot-yes{background:var(--green);}
+.dot-no{background:#E2E8F0;border:1.5px solid #94A3B8;}
 
 /* Legend */
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border);}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.leg{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);}
 
-/* ── TARGET MODAL ── */
+/* ════════════════════════════════════════
+   STAGE VIEW
+════════════════════════════════════════ */
+#view-stage{background:var(--bg);}
+
+/* Stage header bar */
+.sv-hdr{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.25);}
+.sv-back{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.3);border:1.5px solid rgba(255,255,255,.5);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;backdrop-filter:blur(4px);}
+.sv-back:hover{background:rgba(255,255,255,.45);}
+.sv-info{display:flex;align-items:center;gap:10px;}
+.sv-stage-num{font-size:12px;font-weight:800;color:rgba(255,255,255,.7);letter-spacing:.08em;}
+.sv-month{font-size:20px;font-weight:900;color:#fff;}
+.sv-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.35);}
+.sv-actions{display:flex;gap:8px;}
+.sv-btn{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;backdrop-filter:blur(4px);}
+.sv-btn:hover{background:rgba(255,255,255,.35);}
+
+/* Stage body */
+.sv-body{max-width:960px;margin:0 auto;padding:28px 24px 48px;}
+
+/* Hero */
+.sv-hero{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lg);padding:28px 32px;display:flex;align-items:center;gap:32px;margin-bottom:20px;position:relative;overflow:hidden;}
+.sv-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;opacity:.07;}
+.hero-icon{font-size:52px;line-height:1;flex-shrink:0;}
+.hero-pct{font-size:64px;font-weight:900;line-height:1;flex-shrink:0;}
+.hero-right{flex:1;}
+.hero-lbl{font-size:13px;color:var(--muted);margin-bottom:10px;}
+.hero-bar-trk{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:8px;}
+.hero-bar-fill{height:100%;border-radius:6px;transition:width .9s ease;}
+.hero-sub{font-size:12px;color:var(--muted);}
+
+/* Section */
+.sv-sec{margin-bottom:20px;}
+.sv-sec-title{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+/* Target panel */
+.tgt-panel{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;}
+.tgt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px;}
+.tgt-grp{display:flex;flex-direction:column;gap:4px;}
+.tgt-lbl{font-size:11px;font-weight:700;color:var(--text2);}
+.tgt-inp{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);background:var(--card2);outline:none;transition:border-color .15s;width:100%;}
+.tgt-inp:focus{border-color:var(--purple);}
+.tgt-save{padding:10px 22px;background:var(--purple);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;transition:background .15s;}
+.tgt-save:hover{background:#7C3AED;}
+.tgt-row{display:flex;align-items:center;justify-content:space-between;}
+.tgt-saved-note{font-size:12px;color:var(--green);font-weight:600;display:none;}
+
+/* Metric cards */
+.mcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);}
+.mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.mc-name{font-size:12px;font-weight:700;color:var(--muted);}
+.mc-rate{font-size:14px;font-weight:900;}
+.mc-vals{display:flex;align-items:baseline;gap:3px;margin-bottom:8px;}
+.mc-actual{font-size:26px;font-weight:900;color:var(--text);}
+.mc-unit{font-size:12px;color:var(--muted);}
+.mc-tgt{font-size:11px;color:var(--muted);margin-left:auto;}
+.mc-trk{height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.mc-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+
+/* Staff grid */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;}
+.scard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 14px;box-shadow:var(--shadow);}
+.sav{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;margin-bottom:10px;}
+.sname{font-size:15px;font-weight:800;color:var(--text);}
+.scontrib{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.sstats{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;}
+.ss{font-size:12px;color:var(--muted);}
+.ss b{color:var(--text2);font-weight:700;}
+
+/* No data in stage */
+.nodata{text-align:center;padding:48px 16px;}
+.nodata-icon{font-size:52px;margin-bottom:14px;}
+.nodata h3{font-size:17px;color:var(--text);margin-bottom:8px;}
+.nodata p{font-size:13px;color:var(--muted);margin-bottom:20px;}
+
+/* Target modal (map level) */
 .t-overlay{position:fixed;inset:0;background:rgba(20,30,80,.4);backdrop-filter:blur(5px);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;opacity:0;pointer-events:none;transition:opacity .2s;}
 .t-overlay.open{opacity:1;pointer-events:all;}
 .t-modal{background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:580px;max-height:calc(100vh - 56px);overflow-y:auto;transform:translateY(-18px);transition:transform .2s;}
@@ -136,76 +194,20 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .t-body{padding:20px 24px 28px;}
 .close-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .close-btn:hover{color:var(--red);border-color:var(--red);}
-
-/* Month tabs */
 .m-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:20px;}
 .m-tab{padding:7px 4px;border-radius:8px;border:1.5px solid var(--border);background:var(--card2);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;}
 .m-tab.on{background:var(--purple);border-color:var(--purple);color:#fff;}
-.m-tab.has-data{border-color:#C4B5FD;color:var(--purple);}
-
-/* Input grid */
+.m-tab.has-d{border-color:#C4B5FD;color:var(--purple);}
 .inp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
 .inp-g{display:flex;flex-direction:column;gap:5px;}
 .inp-lbl{font-size:12px;font-weight:700;color:var(--text2);}
-.inp-hint{font-size:10px;color:var(--muted);}
 .inp-f{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;color:var(--text);background:var(--card);outline:none;transition:border-color .15s;width:100%;}
 .inp-f:focus{border-color:var(--purple);}
 .save-btn{width:100%;padding:12px;background:var(--purple);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:background .15s;}
 .save-btn:hover{background:#7C3AED;}
 
-/* ── DETAIL MODAL ── */
-.d-overlay{position:fixed;inset:0;background:rgba(20,30,80,.4);backdrop-filter:blur(5px);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s;}
-.d-overlay.open{opacity:1;pointer-events:all;}
-.d-modal{background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:700px;max-height:92vh;overflow-y:auto;transform:scale(.95);transition:transform .2s;}
-.d-overlay.open .d-modal{transform:scale(1);}
-.d-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);border-radius:20px 20px 0 0;z-index:5;}
-.d-head-left{display:flex;align-items:center;gap:10px;}
-.d-icon{font-size:26px;}
-.d-name{font-size:18px;font-weight:900;color:var(--text);}
-.d-body{padding:20px 24px 28px;}
-
-/* Overall row */
-.overall-row{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:18px;margin-bottom:20px;}
-.overall-pct{font-size:44px;font-weight:900;line-height:1;min-width:92px;}
-.overall-right{flex:1;}
-.overall-lbl{font-size:12px;color:var(--muted);margin-bottom:8px;}
-.bar-trk{height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:5px;transition:width .8s ease;}
-
-/* Section head */
-.sec-h{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;}
-
-/* Metric cards */
-.mcards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}
-.mc{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
-.mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-.mc-name{font-size:12px;color:var(--muted);}
-.mc-rate{font-size:13px;font-weight:800;}
-.mc-vals{display:flex;align-items:baseline;gap:3px;margin-bottom:7px;}
-.mc-actual{font-size:22px;font-weight:900;color:var(--text);}
-.mc-unit{font-size:12px;color:var(--muted);}
-.mc-tgt{font-size:11px;color:var(--muted);margin-left:auto;}
-.mc-trk{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
-.mc-fill{height:100%;border-radius:3px;transition:width .8s ease;}
-
-/* Staff grid */
-.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
-.scard{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;}
-.sav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;margin-bottom:8px;}
-.sname{font-size:14px;font-weight:700;color:var(--text);}
-.scontrib{font-size:11px;color:var(--muted);margin-bottom:8px;}
-.sstats{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;}
-.ss{font-size:11px;color:var(--muted);}
-.ss b{color:var(--text2);font-weight:700;}
-
-/* No data */
-.nodata{text-align:center;padding:44px 16px;}
-.nodata-icon{font-size:48px;margin-bottom:12px;}
-.nodata h3{font-size:16px;color:var(--text);margin-bottom:6px;}
-.nodata p{font-size:13px;color:var(--muted);}
-
 /* Toast */
-.toast{position:fixed;bottom:24px;right:24px;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:700;background:var(--card);box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);}
+.toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;background:var(--card);box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.ok{border-left:4px solid var(--green);}
 .toast.err{border-left:4px solid var(--red);}
@@ -213,243 +215,198 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-
 @media(max-width:700px){
   .stage-grid{grid-template-columns:repeat(3,1fr);}
   .sum-card{grid-template-columns:repeat(2,1fr);}
-  .mcards{grid-template-columns:1fr;}
+  .mcards{grid-template-columns:1fr 1fr;}
   .mini-wrap{padding-left:0;padding-top:14px;}
+  .sv-hero{flex-direction:column;align-items:flex-start;gap:16px;}
+  .hero-pct{font-size:44px;}
 }
 </style>
 </head>
 <body>
+<div id="app">
 
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hdr-brand">
-    <span class="hdr-icon">🎮</span>
-    <div>
-      <div class="hdr-title">門市闖關儀表板</div>
-      <div class="hdr-sub">業績目標達成追蹤系統</div>
-    </div>
-  </div>
-  <div class="hdr-right">
-    <select class="year-sel" id="yearSel" onchange="setYear(+this.value)"></select>
-    <button class="btn btn-target" onclick="openTarget()">📋 設定月份目標</button>
-    <button class="btn btn-upload" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績 Excel</button>
-    <button class="btn btn-dl" onclick="dlTemplate()">⬇ 範本</button>
-    <input type="file" id="fileInp" class="file-inp" accept=".xlsx,.xls" onchange="handleUpload(event)">
-  </div>
-</header>
-
-<!-- MAIN -->
-<main class="main">
-
-  <!-- Annual summary -->
-  <div class="sum-card">
-    <div class="stat-col">
-      <div class="stat-num" id="sCleared">0</div>
-      <div class="stat-lbl">月份已達標</div>
-    </div>
-    <div class="stat-col">
-      <div class="stat-num" id="sAvg">--</div>
-      <div class="stat-lbl">年度平均達成率</div>
-    </div>
-    <div class="stat-col">
-      <div class="stat-num" id="sActive">--</div>
-      <div class="stat-lbl">當前關卡</div>
-    </div>
-    <div class="mini-wrap">
-      <div class="mini-title">各指標年度平均</div>
-      <div class="mini-grid">
-        <div class="mini-row"><span class="mini-lbl">銷售額</span><div class="mini-trk"><div class="mini-fill" id="mf0" style="background:var(--gold)"></div></div><span class="mini-val" id="mv0">--</span></div>
-        <div class="mini-row"><span class="mini-lbl">AppleCare</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--green)"></div></div><span class="mini-val" id="mv1">--</span></div>
-        <div class="mini-row"><span class="mini-lbl">配件率</span><div class="mini-trk"><div class="mini-fill" id="mf2" style="background:var(--blue)"></div></div><span class="mini-val" id="mv2">--</span></div>
-        <div class="mini-row"><span class="mini-lbl">主商品</span><div class="mini-trk"><div class="mini-fill" id="mf3" style="background:var(--purple)"></div></div><span class="mini-val" id="mv3">--</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Game map -->
-  <div class="map-card">
-    <div class="map-hdr">
+<!-- ════ MAP VIEW ════ -->
+<div id="view-map" class="view v-on">
+  <header class="hdr">
+    <div class="brand">
+      <span class="brand-icon">🎮</span>
       <div>
-        <div class="map-ttl">🗺 <span id="mapLbl">2026</span> 年度闖關地圖</div>
-        <div class="map-hint">點擊關卡查看詳情 · 紫色按鈕可設定每月目標</div>
+        <div class="brand-title">門市闖關儀表板</div>
+        <div class="brand-sub">業績目標達成追蹤系統</div>
       </div>
     </div>
-    <div class="stage-world">
-      <div class="stage-grid" id="stageGrid"></div>
+    <div class="hdr-right">
+      <select class="year-sel" id="yearSel" onchange="setYear(+this.value)"></select>
+      <button class="btn btn-target" onclick="openTargetModal()">📋 設定月份目標</button>
+      <button class="btn btn-upload" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績 Excel</button>
+      <button class="btn btn-dl" onclick="dlTemplate()">⬇ 範本</button>
+      <input type="file" id="fileInp" class="file-inp" accept=".xlsx,.xls" onchange="handleUpload(event)">
     </div>
-    <div class="legend">
-      <div class="leg-item">⭐ S 完美 ≥100%</div>
-      <div class="leg-item">✅ A 達標 85-99%</div>
-      <div class="leg-item">🔵 B 良好 70-84%</div>
-      <div class="leg-item">🔶 C 待加強 55-69%</div>
-      <div class="leg-item">💀 D 未達標 &lt;55%</div>
-      <div class="leg-item">🔥 進行中</div>
-      <div class="leg-item">🔒 未開始</div>
-      <div class="leg-item" style="margin-left:auto;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;"></span>目標已設定</div>
-      <div class="leg-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E2E8F0;border:1.5px solid #94A3B8;margin-right:4px;"></span>目標未設定</div>
-    </div>
-  </div>
-
-</main>
-
-<!-- TARGET MODAL -->
-<div class="t-overlay" id="tOverlay" onclick="handleTOverlay(event)">
-  <div class="t-modal" id="tModal">
-    <div class="t-head">
-      <div class="t-title">📋 設定月份目標</div>
-      <button class="close-btn" onclick="closeTarget()">✕</button>
-    </div>
-    <div class="t-body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">請對照當月目標 PDF，逐項填入數字後按「儲存目標」。</p>
-      <div class="m-tabs" id="mTabs"></div>
-      <div class="inp-grid" id="tForm">
-        <!-- rendered by JS -->
+  </header>
+  <main class="map-main">
+    <div class="sum-card">
+      <div class="stat-col"><div class="stat-num" id="sCleared">0</div><div class="stat-lbl">月份已達標</div></div>
+      <div class="stat-col"><div class="stat-num" id="sAvg">--</div><div class="stat-lbl">年度平均達成率</div></div>
+      <div class="stat-col"><div class="stat-num" id="sActive">--</div><div class="stat-lbl">當前關卡</div></div>
+      <div class="mini-wrap">
+        <div class="mini-title">各指標年度平均</div>
+        <div class="mini-grid">
+          <div class="mini-row"><span class="mini-lbl">銷售額</span><div class="mini-trk"><div class="mini-fill" id="mf0" style="background:var(--gold)"></div></div><span class="mini-val" id="mv0">--</span></div>
+          <div class="mini-row"><span class="mini-lbl">AppleCare</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--green)"></div></div><span class="mini-val" id="mv1">--</span></div>
+          <div class="mini-row"><span class="mini-lbl">配件率</span><div class="mini-trk"><div class="mini-fill" id="mf2" style="background:var(--blue)"></div></div><span class="mini-val" id="mv2">--</span></div>
+          <div class="mini-row"><span class="mini-lbl">主商品</span><div class="mini-trk"><div class="mini-fill" id="mf3" style="background:var(--purple)"></div></div><span class="mini-val" id="mv3">--</span></div>
+        </div>
       </div>
-      <button class="save-btn" onclick="saveTarget()">✅ 儲存目標</button>
     </div>
-  </div>
+    <div class="map-card">
+      <div class="map-hdr">
+        <div>
+          <div class="map-ttl">🗺 <span id="mapLbl">2026</span> 年度闖關地圖</div>
+          <div class="map-hint">點擊關卡進入該月專屬介面 · 綠點=目標已設定</div>
+        </div>
+      </div>
+      <div class="stage-world">
+        <div class="stage-grid" id="stageGrid"></div>
+      </div>
+      <div class="legend">
+        <div class="leg">⭐ S 完美 ≥100%</div>
+        <div class="leg">✅ A 達標 85-99%</div>
+        <div class="leg">🔵 B 良好 70-84%</div>
+        <div class="leg">🔶 C 待加強 55-69%</div>
+        <div class="leg">💀 D 未達標 &lt;55%</div>
+        <div class="leg">🔥 進行中</div>
+        <div class="leg">🔒 未開始</div>
+        <div class="leg" style="margin-left:auto">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px"></span>目標已設定
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#E2E8F0;border:1.5px solid #94A3B8;margin:0 4px 0 10px"></span>目標未設定
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
-<!-- DETAIL MODAL -->
-<div class="d-overlay" id="dOverlay" onclick="handleDOverlay(event)">
-  <div class="d-modal" id="dModal">
-    <div class="d-head">
-      <div class="d-head-left">
-        <span class="d-icon" id="dIcon">📊</span>
-        <span class="d-name" id="dName"></span>
-        <span class="stag" id="dBadge"></span>
-      </div>
-      <button class="close-btn" onclick="closeDetail()">✕</button>
+<!-- ════ STAGE VIEW ════ -->
+<div id="view-stage" class="view">
+  <div id="sv-hdr" class="sv-hdr">
+    <button class="sv-back" onclick="goMap()">← 返回地圖</button>
+    <div class="sv-info">
+      <span class="sv-stage-num" id="sv-num">STAGE 1</span>
+      <span class="sv-month" id="sv-month">1月</span>
+      <span class="sv-badge" id="sv-badge">--</span>
     </div>
-    <div class="d-body" id="dBody"></div>
+    <div class="sv-actions">
+      <button class="sv-btn" onclick="openTargetModal(currentStage)">📋 設定本月目標</button>
+      <button class="sv-btn" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績</button>
+    </div>
+  </div>
+  <div class="sv-body" id="sv-body"></div>
+</div>
+
+</div><!-- #app -->
+
+<!-- TARGET MODAL -->
+<div class="t-overlay" id="tOverlay" onclick="if(event.target===this)closeTargetModal()">
+  <div class="t-modal">
+    <div class="t-head">
+      <div class="t-title">📋 設定月份目標</div>
+      <button class="close-btn" onclick="closeTargetModal()">✕</button>
+    </div>
+    <div class="t-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">請對照當月目標 PDF，逐項填入數字後按「儲存目標」。</p>
+      <div class="m-tabs" id="mTabs"></div>
+      <div class="inp-grid" id="tForm"></div>
+      <button class="save-btn" onclick="saveTargetModal()">✅ 儲存目標</button>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── Constants ───────────────────────────────────────
-const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-const METRICS = [
-  {key:'sales',   lbl:'銷售額',    unit:'元', color:'var(--gold)'},
-  {key:'accRate', lbl:'配件率',    unit:'%',  color:'var(--blue)'},
-  {key:'ac',      lbl:'AppleCare', unit:'台', color:'var(--green)'},
-  {key:'iphone',  lbl:'iPhone',    unit:'台', color:'var(--purple)'},
-  {key:'mac',     lbl:'Mac',       unit:'台', color:'var(--orange)'},
-  {key:'ipad',    lbl:'iPad',      unit:'台', color:'var(--cyan)'},
-  {key:'watch',   lbl:'Watch',     unit:'台', color:'var(--red)'},
+// ─── Constants ──────────────────────────────────────
+const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const METRICS=[
+  {key:'sales',   lbl:'銷售額',    tLbl:'銷售額目標（元）',    unit:'元', color:'var(--gold)'},
+  {key:'accRate', lbl:'配件率',    tLbl:'配件率目標（%）',     unit:'%',  color:'var(--blue)'},
+  {key:'ac',      lbl:'AppleCare', tLbl:'AppleCare 目標（台）',unit:'台', color:'var(--green)'},
+  {key:'iphone',  lbl:'iPhone',    tLbl:'iPhone 目標（台）',   unit:'台', color:'var(--purple)'},
+  {key:'mac',     lbl:'Mac',       tLbl:'Mac 目標（台）',      unit:'台', color:'var(--orange)'},
+  {key:'ipad',    lbl:'iPad',      tLbl:'iPad 目標（台）',     unit:'台', color:'var(--cyan)'},
+  {key:'watch',   lbl:'Watch',     tLbl:'Watch 目標（台）',    unit:'台', color:'var(--red)'},
 ];
-const TARGET_LABELS = {
-  sales:'銷售額目標（元）', accRate:'配件率目標（%）',
-  ac:'AppleCare 目標（台）', iphone:'iPhone 目標（台）',
-  mac:'Mac 目標（台）', ipad:'iPad 目標（台）', watch:'Watch 目標（台）'
-};
-// Serpentine: row1=1-4, row2=8-5 reversed, row3=9-12
-const STAGE_DOM_ORDER = [1,2,3,4,8,7,6,5,9,10,11,12];
-const GRADE = {
+const DOM_ORDER=[1,2,3,4,8,7,6,5,9,10,11,12];
+const GRADE={
   icon :{s:'⭐',a:'✅',b:'🔵',c:'🔶',d:'💀',active:'🔥',locked:'🔒'},
-  lbl  :{s:'S 完美',a:'A 達標',b:'B 良好',c:'C 待加強',d:'D 未達標',active:'進行中',locked:'未開始'},
+  lbl  :{s:'S 完美達標',a:'A 達標',b:'B 良好',c:'C 待加強',d:'D 未達標',active:'進行中',locked:'未開始'},
+  color:{s:'var(--gold)',a:'var(--green)',b:'var(--blue)',c:'var(--orange)',d:'var(--red)',active:'var(--orange)',locked:'#94A3B8'},
+  bg   :{s:'linear-gradient(135deg,#F59E0B,#D97706)',a:'linear-gradient(135deg,#10B981,#059669)',b:'linear-gradient(135deg,#3B82F6,#2563EB)',c:'linear-gradient(135deg,#F97316,#EA580C)',d:'linear-gradient(135deg,#EF4444,#DC2626)',active:'linear-gradient(135deg,#F97316,#EA580C)',locked:'linear-gradient(135deg,#94A3B8,#64748B)'},
 };
 
-// ─── State ───────────────────────────────────────────
-const S = { year: new Date().getFullYear(), perf: null };
-let targetMonth = 1;
+// ─── State ──────────────────────────────────────────
+const S={year:new Date().getFullYear(), perf:null};
+let currentStage=1, targetModalMonth=1;
 
 // ─── Helpers ────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const fmtN = n => (n==null||n==='')?'--':Number(n).toLocaleString('zh-TW');
-const parseN = v => { const n=parseFloat(String(v??'').replace(/,/g,'')); return isNaN(n)?0:n; };
-const cap = v => Math.min(v??0,100);
-
-function gradeOf(pct) {
-  if (pct==null) return 'locked';
-  if (pct>=100) return 's'; if (pct>=85) return 'a';
-  if (pct>=70)  return 'b'; if (pct>=55) return 'c';
-  return 'd';
-}
-const pctClr = g => ({s:'var(--gold)',a:'var(--green)',b:'var(--blue)',c:'var(--orange)',d:'var(--red)'}[g]||'var(--muted)');
-
-function lsKey(type) { return `stk_${type}_${S.year}`; }
-
-function loadTargets() {
-  try { return JSON.parse(localStorage.getItem(lsKey('tgt'))||'{}'); } catch{ return {}; }
-}
-function saveTargets(obj) { localStorage.setItem(lsKey('tgt'), JSON.stringify(obj)); }
-function loadPerf() {
-  try { return JSON.parse(localStorage.getItem(lsKey('perf'))||'null'); } catch{ return null; }
-}
-function savePerf(obj) { localStorage.setItem(lsKey('perf'), JSON.stringify(obj)); }
+const $=id=>document.getElementById(id);
+const fmtN=n=>(n==null||n==='')?'--':Number(n).toLocaleString('zh-TW');
+const parseN=v=>{const n=parseFloat(String(v??'').replace(/,/g,''));return isNaN(n)?0:n;};
+const cap=v=>Math.min(v??0,100);
+function gradeOf(pct){if(pct==null)return 'locked';if(pct>=100)return 's';if(pct>=85)return 'a';if(pct>=70)return 'b';if(pct>=55)return 'c';return 'd';}
+const lsKey=t=>`stk_${t}_${S.year}`;
+function loadTgts(){try{return JSON.parse(localStorage.getItem(lsKey('tgt'))||'{}')}catch{return {};}}
+function saveTgts(o){localStorage.setItem(lsKey('tgt'),JSON.stringify(o));}
+function loadPerf(){try{return JSON.parse(localStorage.getItem(lsKey('perf'))||'null')}catch{return null;}}
+function savePerf(o){localStorage.setItem(lsKey('perf'),JSON.stringify(o));}
 
 // ─── Calculation ────────────────────────────────────
-function calcMonth(m) {
-  const tgts = loadTargets();
-  const targets = tgts[m] || {};
-  const months = S.perf?.months || {};
-  const md = months[m];
-  if (!md?.staffRows?.length) return null;
-  const rows = md.staffRows;
-
-  const tot = {};
-  for (const r of rows) {
-    for (const mk of METRICS) {
-      if (mk.key==='accRate') continue;
-      tot[mk.key] = (tot[mk.key]||0)+(r[mk.key]||0);
-    }
-  }
-  // Weighted accRate
-  const mainK = ['iphone','mac','ipad','watch'];
+function calcMonth(m){
+  const tgts=loadTgts(); const targets=tgts[m]||{};
+  const md=S.perf?.months?.[m];
+  if(!md?.staffRows?.length) return null;
+  const rows=md.staffRows;
+  const tot={};
+  for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate') tot[mk.key]=(tot[mk.key]||0)+(r[mk.key]||0);}
+  const mk2=['iphone','mac','ipad','watch'];
   let an=0,ad=0;
-  for (const r of rows) {
-    const u=mainK.reduce((s,k)=>s+(r[k]||0),0); an+=(r.accRate||0)*u; ad+=u;
-  }
-  tot.accRate = ad>0 ? an/ad : 0;
-
-  const rates = {};
-  for (const mk of METRICS) {
-    const t=targets[mk.key];
-    rates[mk.key] = (t&&t>0) ? Math.round((tot[mk.key]||0)/t*100) : null;
-  }
-  const mainRates = mainK.map(k=>rates[k]).filter(v=>v!=null);
-  const mainAvg = mainRates.length ? Math.round(mainRates.reduce((a,b)=>a+b,0)/mainRates.length) : null;
-  const all = Object.values(rates).filter(v=>v!=null);
-  const overall = all.length ? Math.round(all.reduce((a,b)=>a+b,0)/all.length) : null;
-  return {tot, rates, overall, mainAvg};
+  for(const r of rows){const u=mk2.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
+  tot.accRate=ad>0?an/ad:0;
+  const rates={};
+  for(const mk of METRICS){const t=targets[mk.key];rates[mk.key]=(t&&t>0)?Math.round((tot[mk.key]||0)/t*100):null;}
+  const mainR=mk2.map(k=>rates[k]).filter(v=>v!=null);
+  const mainAvg=mainR.length?Math.round(mainR.reduce((a,b)=>a+b,0)/mainR.length):null;
+  const all=Object.values(rates).filter(v=>v!=null);
+  const overall=all.length?Math.round(all.reduce((a,b)=>a+b,0)/all.length):null;
+  return{tot,rates,overall,mainAvg,targets};
 }
 
-function monthStatus(m) {
-  const now=new Date(), cy=now.getFullYear(), cm=now.getMonth()+1;
-  const hasPerf = !!(S.perf?.months?.[m]?.staffRows?.length);
-  if (S.year<cy) return hasPerf?'done':'locked';
-  if (S.year>cy) return 'locked';
-  if (m<cm) return hasPerf?'done':'locked';
-  if (m===cm) return 'active';
+function monthStatus(m){
+  const now=new Date(),cy=now.getFullYear(),cm=now.getMonth()+1;
+  const hasPerf=!!(S.perf?.months?.[m]?.staffRows?.length);
+  if(S.year<cy)return hasPerf?'done':'locked';
+  if(S.year>cy)return 'locked';
+  if(m<cm)return hasPerf?'done':'locked';
+  if(m===cm)return 'active';
   return 'locked';
 }
 
-// ─── Render Stages ──────────────────────────────────
-function renderStages() {
-  const grid = $('stageGrid');
-  grid.innerHTML = '';
-  const tgts = loadTargets();
-
-  for (const m of STAGE_DOM_ORDER) {
-    const status = monthStatus(m);
-    const calc = (status!=='locked') ? calcMonth(m) : null;
-    const pct = calc?.overall ?? null;
-    const grade = status==='active'?'active': status==='locked'?'locked': gradeOf(pct);
-    const hasTgt = !!(tgts[m] && Object.values(tgts[m]).some(v=>v>0));
-
-    const node = document.createElement('div');
-    node.className = `snode${grade==='locked'?' locked':''}`;
-    node.dataset.month = m;
-    if (grade!=='locked') node.onclick = ()=>openDetail(m);
-
-    node.innerHTML = `
-      ${hasTgt ? '<div class="has-tgt-dot"></div>' : '<div class="no-tgt-dot"></div>'}
+// ─── MAP VIEW ───────────────────────────────────────
+function renderStages(){
+  const grid=$('stageGrid'); grid.innerHTML='';
+  const tgts=loadTgts();
+  for(const m of DOM_ORDER){
+    const st=monthStatus(m),calc=(st!=='locked')?calcMonth(m):null;
+    const pct=calc?.overall??null;
+    const grade=st==='active'?'active':st==='locked'?'locked':gradeOf(pct);
+    const hasTgt=!!(tgts[m]&&Object.values(tgts[m]).some(v=>v>0));
+    const node=document.createElement('div');
+    node.className=`snode${grade==='locked'?' locked':''}`;
+    node.dataset.month=m;
+    if(grade!=='locked') node.onclick=()=>goStage(m);
+    node.innerHTML=`
+      <div class="tgt-dot ${hasTgt?'dot-yes':'dot-no'}"></div>
       <div class="orb orb-${grade}">
         <span class="orb-num">STAGE ${m}</span>
         <span class="orb-icon">${GRADE.icon[grade]}</span>
@@ -461,158 +418,132 @@ function renderStages() {
       </div>`;
     grid.appendChild(node);
   }
-
   requestAnimationFrame(()=>requestAnimationFrame(drawPath));
 }
 
-// ─── SVG Path ───────────────────────────────────────
-function drawPath() {
-  const grid = $('stageGrid');
-  const old = grid.querySelector('.path-svg');
-  if (old) old.remove();
-
-  const gr = grid.getBoundingClientRect();
-  const pts = [];
-  for (let m=1; m<=12; m++) {
-    const node = grid.querySelector(`[data-month="${m}"]`);
-    const orb  = node?.querySelector('.orb');
-    if (!orb) continue;
-    const r = orb.getBoundingClientRect();
-    pts.push({ x: r.left-gr.left+r.width/2, y: r.top-gr.top+r.height/2 });
+function drawPath(){
+  const grid=$('stageGrid');
+  const old=grid.querySelector('.path-svg'); if(old)old.remove();
+  const gr=grid.getBoundingClientRect();
+  const pts=[];
+  for(let m=1;m<=12;m++){
+    const node=grid.querySelector(`[data-month="${m}"]`);
+    const orb=node?.querySelector('.orb'); if(!orb)continue;
+    const r=orb.getBoundingClientRect();
+    pts.push({x:r.left-gr.left+r.width/2,y:r.top-gr.top+r.height/2});
   }
-  if (pts.length<2) return;
-
-  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  if(pts.length<2)return;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.classList.add('path-svg');
-  svg.setAttribute('width', gr.width);
-  svg.setAttribute('height', gr.height);
-  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:0;';
-
-  // Build smooth bezier path
-  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-  for (let i=1; i<pts.length; i++) {
-    const p=pts[i-1], c=pts[i];
-    const mx=(p.x+c.x)/2;
-    d += ` C ${mx.toFixed(1)},${p.y.toFixed(1)} ${mx.toFixed(1)},${c.y.toFixed(1)} ${c.x.toFixed(1)},${c.y.toFixed(1)}`;
+  svg.setAttribute('width',gr.width);svg.setAttribute('height',gr.height);
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;z-index:0;';
+  let d=`M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for(let i=1;i<pts.length;i++){
+    const p=pts[i-1],c=pts[i],mx=(p.x+c.x)/2;
+    d+=` C ${mx.toFixed(1)},${p.y.toFixed(1)} ${mx.toFixed(1)},${c.y.toFixed(1)} ${c.x.toFixed(1)},${c.y.toFixed(1)}`;
   }
-
-  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-  path.setAttribute('d', d);
-  path.setAttribute('fill','none');
-  path.setAttribute('stroke','var(--path)');
-  path.setAttribute('stroke-width','3');
-  path.setAttribute('stroke-dasharray','8 5');
-  path.setAttribute('stroke-linecap','round');
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d);path.setAttribute('fill','none');
+  path.setAttribute('stroke','var(--path)');path.setAttribute('stroke-width','3');
+  path.setAttribute('stroke-dasharray','8 5');path.setAttribute('stroke-linecap','round');
   svg.appendChild(path);
   grid.style.position='relative';
-  grid.insertBefore(svg, grid.firstChild);
+  grid.insertBefore(svg,grid.firstChild);
 }
 
-// ─── Summary ────────────────────────────────────────
-function renderSummary() {
+function renderSummary(){
   const now=new Date();
   let cleared=0;
-  const oAll=[],sR=[],aR=[],acR=[],mR=[];
-  for (let m=1; m<=12; m++) {
-    const c=calcMonth(m); if (!c||c.overall==null) continue;
-    oAll.push(c.overall);
-    if (c.overall>=100) cleared++;
-    if (c.rates.sales!=null)   sR.push(c.rates.sales);
-    if (c.rates.accRate!=null) aR.push(c.rates.accRate);
-    if (c.rates.ac!=null)      acR.push(c.rates.ac);
-    if (c.mainAvg!=null)       mR.push(c.mainAvg);
+  const oA=[],sR=[],aR=[],acR=[],mR=[];
+  for(let m=1;m<=12;m++){
+    const c=calcMonth(m);if(!c||c.overall==null)continue;
+    oA.push(c.overall);if(c.overall>=100)cleared++;
+    if(c.rates.sales!=null)sR.push(c.rates.sales);
+    if(c.rates.accRate!=null)aR.push(c.rates.accRate);
+    if(c.rates.ac!=null)acR.push(c.rates.ac);
+    if(c.mainAvg!=null)mR.push(c.mainAvg);
   }
-  const avg = r=>r.length?Math.round(r.reduce((a,b)=>a+b,0)/r.length):null;
-  const setBar=(fi,vi,r)=>{ const a=avg(r); $(fi).style.width=`${cap(a)}%`; $(vi).textContent=a!=null?`${a}%`:'--'; };
-
-  $('sCleared').textContent = cleared;
-  $('sAvg').textContent = oAll.length?`${avg(oAll)}%`:'--';
-  $('sActive').textContent = (S.year===now.getFullYear())?`${now.getMonth()+1}月`:'--';
-  setBar('mf0','mv0',sR); setBar('mf1','mv1',acR);
-  setBar('mf2','mv2',aR); setBar('mf3','mv3',mR);
+  const avg=r=>r.length?Math.round(r.reduce((a,b)=>a+b,0)/r.length):null;
+  const setBar=(fi,vi,r)=>{const a=avg(r);$(fi).style.width=`${cap(a)}%`;$(vi).textContent=a!=null?`${a}%`:'--';};
+  $('sCleared').textContent=cleared;
+  $('sAvg').textContent=oA.length?`${avg(oA)}%`:'--';
+  $('sActive').textContent=(S.year===now.getFullYear())?`${now.getMonth()+1}月`:'--';
+  setBar('mf0','mv0',sR);setBar('mf1','mv1',acR);setBar('mf2','mv2',aR);setBar('mf3','mv3',mR);
 }
 
-// ─── Target Modal ────────────────────────────────────
-function openTarget(month) {
-  renderMonthTabs();
-  selectTargetMonth(month||1);
-  $('tOverlay').classList.add('open');
-}
-function closeTarget() { $('tOverlay').classList.remove('open'); }
-function handleTOverlay(e) { if(e.target===$('tOverlay')) closeTarget(); }
+// ─── STAGE VIEW ─────────────────────────────────────
+function goStage(m){
+  currentStage=m;
+  const st=monthStatus(m),calc=calcMonth(m);
+  const grade=st==='active'?'active':gradeOf(calc?.overall??null);
 
-function renderMonthTabs() {
-  const tgts=loadTargets();
-  $('mTabs').innerHTML = MONTHS.map((_,i)=>{
-    const m=i+1;
-    const has=!!(tgts[m]&&Object.values(tgts[m]).some(v=>v>0));
-    const on=m===targetMonth?'on':'';
-    const hc=(!on&&has)?'has-data':'';
-    return `<div class="m-tab ${on} ${hc}" onclick="selectTargetMonth(${m})">${MONTHS[i]}</div>`;
-  }).join('');
-}
+  // Header
+  const hdr=$('sv-hdr');
+  hdr.style.background=GRADE.bg[grade];
+  $('sv-num').textContent=`STAGE ${m}`;
+  $('sv-month').textContent=MONTHS[m-1];
+  $('sv-badge').textContent=GRADE.lbl[grade];
 
-function selectTargetMonth(m) {
-  targetMonth=m;
-  const tgts=loadTargets();
-  const cur=tgts[m]||{};
-  $('tForm').innerHTML = METRICS.map(mk=>`
-    <div class="inp-g">
-      <label class="inp-lbl">${TARGET_LABELS[mk.key]}</label>
-      <input class="inp-f" id="tinp-${mk.key}" type="number" min="0" placeholder="0"
-        value="${cur[mk.key]||''}">
-    </div>`).join('');
-  renderMonthTabs();
+  // Build body
+  renderStageBody(m, calc, grade);
+
+  // Switch views
+  $('view-map').classList.remove('v-on');
+  $('view-stage').classList.add('v-on');
+  window.scrollTo(0,0);
 }
 
-function saveTarget() {
-  const tgts=loadTargets();
-  tgts[targetMonth]={};
-  for (const mk of METRICS) {
-    const v=parseN($(`tinp-${mk.key}`)?.value);
-    tgts[targetMonth][mk.key]=v;
-  }
-  saveTargets(tgts);
-  renderStages(); renderSummary();
-  showToast(`✅ ${MONTHS[targetMonth-1]} 目標已儲存`,'ok');
-  renderMonthTabs();
-}
-
-// ─── Detail Modal ────────────────────────────────────
-function openDetail(m) {
-  const status=monthStatus(m);
-  const calc=calcMonth(m);
-  const grade=status==='active'?'active':gradeOf(calc?.overall??null);
-  $('dIcon').textContent=GRADE.icon[grade];
-  $('dName').textContent=MONTHS[m-1]+' 詳情';
-  $('dBadge').className=`stag tag-${grade}`;
-  $('dBadge').textContent=GRADE.lbl[grade];
-
-  const body=$('dBody');
-  const tgts=loadTargets();
+function renderStageBody(m, calc, grade){
+  const body=$('sv-body');
+  const tgts=loadTgts();
   const targets=tgts[m]||{};
-  const md=S.perf?.months?.[m];
+  const pct=calc?.overall??null;
+  const gc=GRADE.color[grade];
 
-  if (!calc) {
-    body.innerHTML=`<div class="nodata"><div class="nodata-icon">📭</div><h3>尚無${MONTHS[m-1]}業績資料</h3><p>請上傳 Excel 業績檔，或先設定本月目標</p><button class="save-btn" style="margin-top:16px;width:auto;padding:10px 24px;" onclick="closeDetail();openTarget(${m})">📋 設定${MONTHS[m-1]}目標</button></div>`;
-  } else {
-    const {tot,rates,overall}=calc;
-    const g=gradeOf(overall);
-    let html=`
-      <div class="overall-row">
-        <div class="overall-pct" style="color:${pctClr(g)}">${overall??'--'}%</div>
-        <div class="overall-right">
-          <div class="overall-lbl">門市整體達成率（各指標加權平均）</div>
-          <div class="bar-trk"><div class="bar-fill" style="width:${cap(overall)}%;background:${pctClr(g)}"></div></div>
+  // ── Hero
+  let html=`
+    <div class="sv-hero" style="border-top:4px solid ${gc}">
+      <div class="hero-icon">${GRADE.icon[grade]}</div>
+      <div class="hero-pct" style="color:${gc}">${pct!==null?pct+'%':'--'}</div>
+      <div class="hero-right">
+        <div class="hero-lbl">門市整體達成率（各指標平均）・ STAGE ${m} ${MONTHS[m-1]}</div>
+        <div class="hero-bar-trk"><div class="hero-bar-fill" style="width:${cap(pct)}%;background:${gc}"></div></div>
+        <div class="hero-sub">${pct===null?'尚無業績資料，請上傳 Excel 或設定目標後重新整理':pct>=100?'🎉 完美達標！繼續保持！':pct>=85?'✅ 本月表現優秀':pct>=70?'📈 繼續加油，差一點就達標':'⚡ 需要衝刺，加油！'}</div>
+      </div>
+    </div>`;
+
+  // ── Target panel (inline editable)
+  html+=`
+    <div class="sv-sec">
+      <div class="sv-sec-title">🎯 本月目標設定
+        <span id="tgt-saved-note" style="font-size:11px;font-weight:700;color:var(--green);margin-left:8px;display:none;">✓ 已儲存</span>
+      </div>
+      <div class="tgt-panel">
+        <div class="tgt-grid">`;
+  for(const mk of METRICS){
+    html+=`
+      <div class="tgt-grp">
+        <label class="tgt-lbl">${mk.tLbl}</label>
+        <input class="tgt-inp" id="sv-inp-${mk.key}" type="number" min="0" placeholder="0" value="${targets[mk.key]||''}">
+      </div>`;
+  }
+  html+=`</div>
+        <div class="tgt-row">
+          <span style="font-size:12px;color:var(--muted)">設定後資料將自動更新</span>
+          <button class="tgt-save" onclick="saveStageTgt(${m})">✅ 儲存目標</button>
         </div>
       </div>
-      <div class="sec-h">🎯 各項指標達成</div>
-      <div class="mcards">`;
-    for (const mk of METRICS) {
-      const r=rates[mk.key]; const mg=gradeOf(r);
+    </div>`;
+
+  // ── Metrics
+  if(calc){
+    const {tot,rates}=calc;
+    html+=`<div class="sv-sec"><div class="sv-sec-title">📊 各項指標達成</div><div class="mcards">`;
+    for(const mk of METRICS){
+      const r=rates[mk.key],mg=gradeOf(r),mc=GRADE.color[mg]||'var(--muted)';
       html+=`
-        <div class="mc">
-          <div class="mc-top"><span class="mc-name">${mk.lbl}</span><span class="mc-rate" style="color:${r!=null?pctClr(mg):'var(--muted)'}">${r!=null?r+'%':'--'}</span></div>
+        <div class="mc" style="border-top:3px solid ${mk.color}">
+          <div class="mc-top"><span class="mc-name">${mk.lbl}</span><span class="mc-rate" style="color:${r!=null?mc:'var(--muted)'}">${r!=null?r+'%':'--'}</span></div>
           <div class="mc-vals">
             <span class="mc-actual">${mk.key==='sales'?fmtN(Math.round(tot[mk.key]||0)):Math.round(tot[mk.key]||0)}</span>
             <span class="mc-unit">${mk.unit}</span>
@@ -621,140 +552,173 @@ function openDetail(m) {
           <div class="mc-trk"><div class="mc-fill" style="width:${cap(r)}%;background:${mk.color}"></div></div>
         </div>`;
     }
-    html+='</div>';
+    html+=`</div></div>`;
 
-    const names=[...new Set(md.staffRows.map(r=>r.name))];
-    html+=`<div class="sec-h">👥 個人業績</div><div class="sgrid">`;
-    for (const name of names) {
-      const rows=md.staffRows.filter(r=>r.name===name);
-      const st={};
-      for (const r of rows) for (const mk of METRICS) { if(mk.key!=='accRate') st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0); }
-      const mainK=['iphone','mac','ipad','watch'];
-      let an2=0,ad2=0;
-      for (const r of rows) { const u=mainK.reduce((s,k)=>s+(r[k]||0),0); an2+=(r.accRate||0)*u; ad2+=u; }
-      st.accRate=ad2>0?Math.round(an2/ad2):0;
-      const contrib=tot.sales>0?Math.round(st.sales/tot.sales*100):0;
-      html+=`
-        <div class="scard">
-          <div class="sav">${name[0]||'?'}</div>
-          <div class="sname">${name}</div>
-          <div class="scontrib">銷售貢獻 ${contrib}%</div>
-          <div class="sstats">
-            <div class="ss">iPhone <b>${st.iphone||0}</b></div>
-            <div class="ss">Mac <b>${st.mac||0}</b></div>
-            <div class="ss">iPad <b>${st.ipad||0}</b></div>
-            <div class="ss">Watch <b>${st.watch||0}</b></div>
-            <div class="ss">AC <b>${st.ac||0}</b></div>
-            <div class="ss">配件率 <b>${st.accRate}%</b></div>
-          </div>
-        </div>`;
+    // ── Staff
+    const md=S.perf?.months?.[m];
+    if(md?.staffRows?.length){
+      const names=[...new Set(md.staffRows.map(r=>r.name))];
+      html+=`<div class="sv-sec"><div class="sv-sec-title">👥 個人業績</div><div class="staff-grid">`;
+      for(const name of names){
+        const rows=md.staffRows.filter(r=>r.name===name);
+        const st={};
+        for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate') st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0);}
+        const mk3=['iphone','mac','ipad','watch'];
+        let an2=0,ad2=0;
+        for(const r of rows){const u=mk3.reduce((s,k)=>s+(r[k]||0),0);an2+=(r.accRate||0)*u;ad2+=u;}
+        st.accRate=ad2>0?Math.round(an2/ad2):0;
+        const contrib=tot.sales>0?Math.round(st.sales/tot.sales*100):0;
+        html+=`
+          <div class="scard">
+            <div class="sav">${name[0]||'?'}</div>
+            <div class="sname">${name}</div>
+            <div class="scontrib">銷售貢獻 ${contrib}%</div>
+            <div class="sstats">
+              <div class="ss">iPhone <b>${st.iphone||0}</b></div>
+              <div class="ss">Mac <b>${st.mac||0}</b></div>
+              <div class="ss">iPad <b>${st.ipad||0}</b></div>
+              <div class="ss">Watch <b>${st.watch||0}</b></div>
+              <div class="ss">AC <b>${st.ac||0}</b></div>
+              <div class="ss">配件率 <b>${st.accRate}%</b></div>
+            </div>
+          </div>`;
+      }
+      html+=`</div></div>`;
     }
-    html+='</div>';
-    body.innerHTML=html;
+  } else {
+    html+=`
+      <div class="sv-sec">
+        <div class="nodata">
+          <div class="nodata-icon">📭</div>
+          <h3>尚無 ${MONTHS[m-1]} 業績資料</h3>
+          <p>請先設定目標，再上傳 Excel 業績檔</p>
+          <button class="tgt-save" style="width:auto;padding:10px 24px;" onclick="document.getElementById('fileInp').click()">⬆ 上傳業績 Excel</button>
+        </div>
+      </div>`;
   }
-  $('dOverlay').classList.add('open');
-}
-function closeDetail() { $('dOverlay').classList.remove('open'); }
-function handleDOverlay(e) { if(e.target===$('dOverlay')) closeDetail(); }
 
-// ─── Excel Upload ────────────────────────────────────
-function handleUpload(e) {
-  const file=e.target.files[0]; if(!file) return;
+  body.innerHTML=html;
+}
+
+function saveStageTgt(m){
+  const tgts=loadTgts();
+  tgts[m]={};
+  for(const mk of METRICS){const v=parseN($(`sv-inp-${mk.key}`)?.value);tgts[m][mk.key]=v;}
+  saveTgts(tgts);
+  // Recalculate and re-render this stage
+  const st=monthStatus(m),calc=calcMonth(m);
+  const grade=st==='active'?'active':gradeOf(calc?.overall??null);
+  renderStageBody(m,calc,grade);
+  // Update header badge/bg
+  $('sv-hdr').style.background=GRADE.bg[grade];
+  $('sv-badge').textContent=GRADE.lbl[grade];
+  renderStages(); renderSummary();
+  showToast(`✅ ${MONTHS[m-1]} 目標已儲存`,'ok');
+}
+
+function goMap(){
+  $('view-stage').classList.remove('v-on');
+  $('view-map').classList.add('v-on');
+  window.scrollTo(0,0);
+  renderStages(); renderSummary();
+}
+
+// ─── Target Modal (map-level) ────────────────────────
+let tModalMonth=1;
+function openTargetModal(m){
+  tModalMonth=m||1;
+  renderTabs(); selectTab(tModalMonth);
+  $('tOverlay').classList.add('open');
+}
+function closeTargetModal(){$('tOverlay').classList.remove('open');}
+function renderTabs(){
+  const tgts=loadTgts();
+  $('mTabs').innerHTML=MONTHS.map((_,i)=>{
+    const m=i+1,has=!!(tgts[m]&&Object.values(tgts[m]).some(v=>v>0));
+    return `<div class="m-tab ${m===tModalMonth?'on':has?'has-d':''}" onclick="selectTab(${m})">${MONTHS[i]}</div>`;
+  }).join('');
+}
+function selectTab(m){
+  tModalMonth=m;
+  const tgts=loadTgts(),cur=tgts[m]||{};
+  $('tForm').innerHTML=METRICS.map(mk=>`
+    <div class="inp-g">
+      <label class="inp-lbl">${mk.tLbl}</label>
+      <input class="inp-f" id="tinp-${mk.key}" type="number" min="0" placeholder="0" value="${cur[mk.key]||''}">
+    </div>`).join('');
+  renderTabs();
+}
+function saveTargetModal(){
+  const tgts=loadTgts(); tgts[tModalMonth]={};
+  for(const mk of METRICS){const v=parseN($(`tinp-${mk.key}`)?.value);tgts[tModalMonth][mk.key]=v;}
+  saveTgts(tgts);
+  renderStages();renderSummary();renderTabs();
+  showToast(`✅ ${MONTHS[tModalMonth-1]} 目標已儲存`,'ok');
+}
+
+// ─── Excel ──────────────────────────────────────────
+function handleUpload(e){
+  const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
-    try {
+    try{
       const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      const find=names=>{ for(const n of names) if(wb.Sheets[n]) return wb.Sheets[n]; return null; };
+      const find=names=>{for(const n of names)if(wb.Sheets[n])return wb.Sheets[n];return null;};
       const tSh=find(['目標','targets'])||wb.Sheets[wb.SheetNames[0]];
       const pSh=find(['業績','performance'])||wb.Sheets[wb.SheetNames[1]];
       if(!tSh||!pSh){showToast('找不到目標/業績工作表','err');return;}
-
-      // Merge targets from Excel into localStorage (don't overwrite manual)
-      const tgts=loadTargets();
-      const tRows=XLSX.utils.sheet_to_json(tSh,{defval:''});
-      for (const row of tRows) {
-        const m=parseInt(row['月份']||row['月']||0);
-        if(m<1||m>12) continue;
-        tgts[m]={
-          sales:   parseN(row['銷售額目標']||row['銷售額']),
-          accRate: parseN(row['配件率目標%']||row['配件率目標']||row['配件率']),
-          ac:      parseN(row['AC目標']||row['AppleCare目標']||row['AC']),
-          iphone:  parseN(row['iPhone目標']||row['iPhone']),
-          mac:     parseN(row['Mac目標']||row['Mac']),
-          ipad:    parseN(row['iPad目標']||row['iPad']),
-          watch:   parseN(row['Watch目標']||row['Watch']),
-        };
+      const tgts=loadTgts();
+      for(const row of XLSX.utils.sheet_to_json(tSh,{defval:''})){
+        const m=parseInt(row['月份']||row['月']||0);if(m<1||m>12)continue;
+        tgts[m]={sales:parseN(row['銷售額目標']||row['銷售額']),accRate:parseN(row['配件率目標%']||row['配件率目標']||row['配件率']),ac:parseN(row['AC目標']||row['AppleCare目標']||row['AC']),iphone:parseN(row['iPhone目標']||row['iPhone']),mac:parseN(row['Mac目標']||row['Mac']),ipad:parseN(row['iPad目標']||row['iPad']),watch:parseN(row['Watch目標']||row['Watch'])};
       }
-      saveTargets(tgts);
-
+      saveTgts(tgts);
       const months={};
-      const pRows=XLSX.utils.sheet_to_json(pSh,{defval:''});
-      for (const row of pRows) {
-        const m=parseInt(row['月份']||row['月']||0);
-        const name=String(row['姓名']||row['name']||'').trim();
-        if(m<1||m>12||!name) continue;
+      for(const row of XLSX.utils.sheet_to_json(pSh,{defval:''})){
+        const m=parseInt(row['月份']||row['月']||0),name=String(row['姓名']||row['name']||'').trim();
+        if(m<1||m>12||!name)continue;
         months[m]=months[m]||{staffRows:[]};
-        months[m].staffRows.push({
-          name,
-          sales:   parseN(row['銷售額']),
-          accRate: parseN(row['配件率%']||row['配件率']),
-          ac:      parseN(row['AC']||row['AppleCare']),
-          iphone:  parseN(row['iPhone']),
-          mac:     parseN(row['Mac']),
-          ipad:    parseN(row['iPad']),
-          watch:   parseN(row['Watch']),
-        });
+        months[m].staffRows.push({name,sales:parseN(row['銷售額']),accRate:parseN(row['配件率%']||row['配件率']),ac:parseN(row['AC']||row['AppleCare']),iphone:parseN(row['iPhone']),mac:parseN(row['Mac']),ipad:parseN(row['iPad']),watch:parseN(row['Watch'])});
       }
-      S.perf={months};
-      savePerf(S.perf);
-      renderStages(); renderSummary();
+      S.perf={months};savePerf(S.perf);
+      renderStages();renderSummary();
+      // If in stage view, refresh
+      if($('view-stage').classList.contains('v-on')){
+        const st=monthStatus(currentStage),calc=calcMonth(currentStage);
+        const grade=st==='active'?'active':gradeOf(calc?.overall??null);
+        renderStageBody(currentStage,calc,grade);
+      }
       showToast('✅ 業績資料載入成功！','ok');
-    } catch(err) { showToast('讀取失敗：'+err.message,'err'); console.error(err); }
+    }catch(err){showToast('讀取失敗：'+err.message,'err');console.error(err);}
     e.target.value='';
   };
   reader.readAsArrayBuffer(file);
 }
 
-// ─── Download Template ───────────────────────────────
-function dlTemplate() {
+function dlTemplate(){
   const wb=XLSX.utils.book_new();
-  const tData=[['月份','銷售額目標','配件率目標%','AC目標','iPhone目標','Mac目標','iPad目標','Watch目標']];
-  for(let m=1;m<=12;m++) tData.push([m,'','','','','','','']);
-  const tSh=XLSX.utils.aoa_to_sheet(tData);
-  tSh['!cols']=[{wch:6},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:8},{wch:8}];
-  XLSX.utils.book_append_sheet(wb,tSh,'目標');
-  const pData=[['月份','姓名','銷售額','配件率%','AC','iPhone','Mac','iPad','Watch'],[1,'專員A','','','','','','',''],[1,'專員B','','','','','','','']];
-  const pSh=XLSX.utils.aoa_to_sheet(pData);
-  pSh['!cols']=[{wch:6},{wch:8},{wch:10},{wch:8},{wch:6},{wch:8},{wch:6},{wch:6},{wch:8}];
-  XLSX.utils.book_append_sheet(wb,pSh,'業績');
+  const tD=[['月份','銷售額目標','配件率目標%','AC目標','iPhone目標','Mac目標','iPad目標','Watch目標']];
+  for(let m=1;m<=12;m++)tD.push([m,'','','','','','','']);
+  const tS=XLSX.utils.aoa_to_sheet(tD);tS['!cols']=[{wch:6},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,tS,'目標');
+  const pD=[['月份','姓名','銷售額','配件率%','AC','iPhone','Mac','iPad','Watch'],[1,'專員A','','','','','','',''],[1,'專員B','','','','','','','']];
+  const pS=XLSX.utils.aoa_to_sheet(pD);pS['!cols']=[{wch:6},{wch:8},{wch:10},{wch:8},{wch:6},{wch:8},{wch:6},{wch:6},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,pS,'業績');
   XLSX.writeFile(wb,'門市業績範本.xlsx');
 }
 
-// ─── Toast ───────────────────────────────────────────
-function showToast(msg,type='ok') {
-  const t=$('toast'); t.textContent=msg; t.className=`toast ${type} show`;
-  setTimeout(()=>t.classList.remove('show'),3200);
-}
-
 // ─── Year ────────────────────────────────────────────
-function setYear(y) {
-  S.year=y; $('mapLbl').textContent=y;
-  S.perf=loadPerf();
-  renderStages(); renderSummary();
-}
+function setYear(y){S.year=y;$('mapLbl').textContent=y;S.perf=loadPerf();renderStages();renderSummary();}
+
+// ─── Toast ───────────────────────────────────────────
+function showToast(msg,type='ok'){const t=$('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3200);}
 
 // ─── Init ────────────────────────────────────────────
-function init() {
-  const cy=new Date().getFullYear();
-  const sel=$('yearSel'); sel.innerHTML='';
-  for(let y=cy-1;y<=cy+1;y++){
-    const o=document.createElement('option');
-    o.value=y; o.textContent=`${y} 年`; if(y===cy) o.selected=true;
-    sel.appendChild(o);
-  }
-  S.year=cy; S.perf=loadPerf();
-  $('mapLbl').textContent=cy;
-  renderStages(); renderSummary();
+function init(){
+  const cy=new Date().getFullYear(),sel=$('yearSel');sel.innerHTML='';
+  for(let y=cy-1;y<=cy+1;y++){const o=document.createElement('option');o.value=y;o.textContent=`${y} 年`;if(y===cy)o.selected=true;sel.appendChild(o);}
+  S.year=cy;S.perf=loadPerf();$('mapLbl').textContent=cy;
+  renderStages();renderSummary();
   window.addEventListener('resize',()=>requestAnimationFrame(drawPath));
 }
 init();
