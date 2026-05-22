@@ -522,7 +522,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 
       <!-- Step 3: Select Staff -->
       <div id="excelStep3" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <!-- 我的人員設定 -->
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">⭐ 我的人員薪號（設定後自動勾選，多個用逗號分隔）</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="inp-f" id="myStaffInput" type="text" placeholder="例：024675,030180" style="flex:1;font-size:13px">
+            <button class="btn" style="background:var(--purple);color:#fff;font-size:12px;padding:6px 12px;white-space:nowrap" onclick="applyMyStaff()">套用</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:13px;font-weight:700;color:var(--text)">選擇要匯入的銷售人員</div>
           <div style="display:flex;gap:6px">
             <button class="btn" style="background:var(--card2);color:var(--text2);border:1px solid var(--border);font-size:12px;padding:5px 10px" onclick="toggleAllStaff(true)">全選</button>
@@ -1334,10 +1342,40 @@ function excelToStep3(){
     list.appendChild(div);
   }
   showExcelStep(3);
+  initMyStaffInput(); // 自動套用已儲存的我的人員
 }
 
 function toggleAllStaff(checked){
   document.querySelectorAll('.staff-chk').forEach(cb=>cb.checked=checked);
+}
+
+function loadMyStaff(){
+  try{return JSON.parse(localStorage.getItem('stk_mystaff')||'[]')}catch{return[];}
+}
+function applyMyStaff(){
+  const raw=$('myStaffInput').value.trim();
+  const ids=raw.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!ids.length){showToast('請輸入薪號','err');return;}
+  localStorage.setItem('stk_mystaff',JSON.stringify(ids));
+  // 先全不選，再勾選符合的
+  document.querySelectorAll('.staff-chk').forEach(cb=>{
+    const val=cb.value;
+    cb.checked=ids.some(id=>val===id||val.includes(id));
+  });
+  const matched=document.querySelectorAll('.staff-chk:checked').length;
+  showToast(`✅ 已套用，勾選 ${matched} 位人員`,'ok');
+}
+function initMyStaffInput(){
+  const saved=loadMyStaff();
+  if(saved.length){
+    $('myStaffInput').value=saved.join(',');
+    // 自動套用
+    setTimeout(()=>{
+      document.querySelectorAll('.staff-chk').forEach(cb=>{
+        cb.checked=saved.some(id=>cb.value===id||cb.value.includes(id));
+      });
+    },0);
+  }
 }
 
 function saveExcelData(){
