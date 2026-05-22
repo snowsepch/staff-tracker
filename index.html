@@ -502,6 +502,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
         <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">確認欄位對應</div>
         <p style="font-size:12px;color:var(--muted);margin-bottom:12px">系統已自動偵測欄位，如有錯誤請手動調整。「（略過）」表示該欄位無資料。</p>
         <div class="col-map-grid" id="colMapGrid"></div>
+        <!-- 商品分類關鍵字 -->
+        <div style="margin-top:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px">── 商品分類關鍵字（逐筆模式）含此文字→自動歸類，多個用逗號分隔 ──</div>
+          <div class="col-map-grid" style="gap:6px 10px">
+            <span class="col-map-lbl">iPhone</span><input class="inp-f" id="kw_iphone" type="text" style="font-size:12px" placeholder="iphone">
+            <span class="col-map-lbl">Mac</span><input class="inp-f" id="kw_mac" type="text" style="font-size:12px" placeholder="macbook,mac mini,imac,mac pro,mac studio">
+            <span class="col-map-lbl">iPad</span><input class="inp-f" id="kw_ipad" type="text" style="font-size:12px" placeholder="ipad">
+            <span class="col-map-lbl">Apple Watch</span><input class="inp-f" id="kw_watch" type="text" style="font-size:12px" placeholder="apple watch">
+            <span class="col-map-lbl">AppleCare</span><input class="inp-f" id="kw_ac" type="text" style="font-size:12px" placeholder="applecare,ac+,apple care+">
+            <span class="col-map-lbl">Just Care</span><input class="inp-f" id="kw_justCare" type="text" style="font-size:12px" placeholder="just care,justcare">
+          </div>
+        </div>
         <div class="excel-step-btns">
           <button class="btn btn-back" onclick="showExcelStep(1)">← 重新選檔</button>
           <button class="save-btn" style="flex:1" onclick="excelToStep3()">預覽人員 →</button>
@@ -1260,11 +1272,30 @@ function buildColMapGrid(){
       const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===sel?' selected':''}>${colLabel(h)}</option>`).join('');
       return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
     }).join('');
+  // Load saved keywords into inputs
+  fillKwInputs();
 }
 
 function loadColMapSaved(){try{return JSON.parse(localStorage.getItem('stk_colmap')||'{}')}catch{return{};}}
 function saveColMapToStorage(map){localStorage.setItem('stk_colmap',JSON.stringify(map));}
-function clearColMapSaved(){localStorage.removeItem('stk_colmap');buildColMapGrid();showToast('已清除欄位設定','ok');}
+function clearColMapSaved(){localStorage.removeItem('stk_colmap');localStorage.removeItem('stk_prodkw');buildColMapGrid();showToast('已清除欄位設定','ok');}
+
+const DEFAULT_KW={iphone:'iphone',mac:'macbook,mac mini,imac,mac pro,mac studio,mac air',ipad:'ipad',watch:'apple watch',ac:'applecare,apple care+,ac+,applecare+',justCare:'just care,justcare'};
+function loadProdKw(){try{return JSON.parse(localStorage.getItem('stk_prodkw')||'null')||DEFAULT_KW}catch{return DEFAULT_KW;}}
+function saveProdKw(){
+  const kw={};
+  ['iphone','mac','ipad','watch','ac','justCare'].forEach(k=>{
+    const el=$('kw_'+k);if(el)kw[k]=el.value.trim()||DEFAULT_KW[k];
+  });
+  localStorage.setItem('stk_prodkw',JSON.stringify(kw));
+  return kw;
+}
+function fillKwInputs(){
+  const kw=loadProdKw();
+  ['iphone','mac','ipad','watch','ac','justCare'].forEach(k=>{
+    const el=$('kw_'+k);if(el)el.value=kw[k]||DEFAULT_KW[k];
+  });
+}
 
 function getColMap(){
   const keys=['shin','name','sales','qty','product','accRate','iphone','mac','ipad','watch','ac','justCare'];
@@ -1276,7 +1307,8 @@ function getColMap(){
 function excelToStep3(){
   const map=getColMap();
   if(!map.shin&&!map.name){showToast('請至少指定「薪號」或「姓名」欄位','err');return;}
-  saveColMapToStorage(map); // 記住本次欄位設定
+  saveColMapToStorage(map);
+  saveProdKw(); // 記住關鍵字設定
   _excelStaffMap=new Map();
   for(const row of _excelRaw){
     const shin=map.shin?String(row[map.shin]??'').trim():'';
@@ -1326,7 +1358,13 @@ function saveExcelData(){
     };
 
     if(isTransactionMode){
-      // 逐筆交易模式：按商品名稱關鍵字分類
+      // 逐筆交易模式：按商品名稱關鍵字分類（使用使用者設定的關鍵字）
+      const kw=loadProdKw();
+      // 建立 {cat: [keyword array]} 結構
+      const kwMap={};
+      Object.entries(kw).forEach(([cat,str])=>{
+        kwMap[cat]=str.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+      });
       let accAmt=0,mainQty=0;
       for(const row of s.rows){
         const pname=(row[map.product]||'').toLowerCase();
@@ -1334,7 +1372,7 @@ function saveExcelData(){
         const amt=map.sales?parseN(row[map.sales]):0;
         agg.sales+=amt;
         let matched=false;
-        for(const[cat,kws]of Object.entries(PROD_KW)){
+        for(const[cat,kws]of Object.entries(kwMap)){
           if(kws.some(kw=>pname.includes(kw))){
             if(cat==='ac'||cat==='justCare'){agg[cat]+=qty;}
             else{agg[cat]+=qty;mainQty+=qty;}
