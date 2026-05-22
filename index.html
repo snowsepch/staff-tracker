@@ -287,6 +287,33 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
   .photo-drop{min-height:180px;}
 }
 
+/* ════ EXCEL UPLOAD MODAL ════ */
+.excel-modal{max-width:680px !important;}
+.drop-zone{border:2px dashed var(--border);border-radius:14px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--card2);margin:14px 0;}
+.drop-zone:hover{border-color:var(--purple);background:#EDE9FE22;}
+.drop-zone-icon{font-size:44px;margin-bottom:10px;}
+.drop-zone-title{font-size:14px;font-weight:700;color:var(--text2);margin:6px 0 4px;}
+.drop-zone-sub{font-size:11px;color:var(--muted);}
+.step-row{display:flex;align-items:center;gap:6px;margin-bottom:18px;}
+.step-pill{font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px;background:var(--card2);color:var(--muted);border:1.5px solid var(--border);white-space:nowrap;}
+.step-pill.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+.step-pill.done{background:var(--green);color:#fff;border-color:var(--green);}
+.step-arr{color:var(--muted);font-size:14px;}
+.col-map-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;max-height:340px;overflow-y:auto;padding-right:4px;}
+.col-map-lbl{font-size:12px;font-weight:700;color:var(--text2);text-align:right;white-space:nowrap;}
+.staff-list{max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;padding:4px;}
+.staff-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;transition:background .1s;cursor:pointer;}
+.staff-item:hover{background:var(--card2);}
+.staff-item label{flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.shin-badge{font-size:11px;color:var(--muted);background:var(--card2);padding:2px 8px;border-radius:5px;font-family:monospace;border:1px solid var(--border);flex-shrink:0;}
+.excel-step-btns{display:flex;gap:8px;margin-top:16px;}
+.btn-back{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
+.btn-back:hover{background:var(--border);}
+.excel-month-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.excel-month-row label{font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap;}
+.excel-month-sel{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);outline:none;}
+.staff-shin-tag{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--card2);color:var(--muted);font-family:monospace;border:1px solid var(--border);margin-left:4px;}
+
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 @media(max-width:700px){
   .stage-grid{grid-template-columns:repeat(3,1fr);}
@@ -297,6 +324,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
   .players-grid{grid-template-columns:1fr;}
 }
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -314,7 +342,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
     <div class="hdr-right">
       <select class="year-sel" id="yearSel" onchange="setYear(+this.value)"></select>
       <button class="btn btn-target" onclick="openTargetModal()">📋 設定月份目標</button>
-      <button class="btn btn-upload" onclick="openPhotoModal()">📷 上傳照片記錄</button>
+      <button class="btn btn-upload" onclick="openExcelModal()">📊 上傳業績 Excel</button>
     </div>
   </header>
   <main class="map-main">
@@ -365,7 +393,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
     </div>
     <div class="sv-acts">
       <button class="sv-btn" onclick="openTargetModal(currentStage)">📋 設定本月目標</button>
-      <button class="sv-btn" onclick="openPhotoModal(currentStage)">📷 上傳照片</button>
+      <button class="sv-btn" onclick="openExcelModal(currentStage)">📊 上傳業績 Excel</button>
     </div>
   </div>
   <div class="sv-body" id="sv-body"></div>
@@ -404,6 +432,68 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
           <div id="photoStaffRows"></div>
           <button class="add-staff-btn" onclick="addPhotoStaffRow()">+ 新增人員</button>
           <button class="save-btn" onclick="savePhotoData()">✅ 儲存業績記錄</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXCEL UPLOAD MODAL -->
+<div class="t-overlay" id="excelOverlay" onclick="if(event.target===this)closeExcelModal()">
+  <div class="t-modal excel-modal">
+    <div class="t-head">
+      <div class="t-title">📊 上傳全店業績 Excel</div>
+      <button class="close-btn" onclick="closeExcelModal()">✕</button>
+    </div>
+    <div class="t-body">
+      <!-- Step indicator -->
+      <div class="step-row">
+        <span class="step-pill" id="spill1">1 選擇檔案</span>
+        <span class="step-arr">→</span>
+        <span class="step-pill" id="spill2">2 欄位對應</span>
+        <span class="step-arr">→</span>
+        <span class="step-pill" id="spill3">3 選擇人員</span>
+      </div>
+
+      <!-- Step 1: File Upload -->
+      <div id="excelStep1">
+        <div class="excel-month-row">
+          <label>月份</label>
+          <select class="excel-month-sel" id="excelMonth"></select>
+        </div>
+        <div class="drop-zone" onclick="document.getElementById('excelFileInp').click()">
+          <div class="drop-zone-icon">📊</div>
+          <div class="drop-zone-title">點擊選擇全店業績 Excel 檔案</div>
+          <div class="drop-zone-sub">支援 .xlsx / .xls / .csv 格式</div>
+        </div>
+        <input type="file" id="excelFileInp" accept=".xlsx,.xls,.csv" class="file-inp" onchange="handleExcelFile(event)">
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">上傳後系統會自動偵測所有銷售人員（薪號），再由您手動選擇要匯入的人員</p>
+      </div>
+
+      <!-- Step 2: Column Mapping -->
+      <div id="excelStep2" style="display:none">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">確認欄位對應</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">系統已自動偵測欄位，如有錯誤請手動調整。「（略過）」表示該欄位無資料。</p>
+        <div class="col-map-grid" id="colMapGrid"></div>
+        <div class="excel-step-btns">
+          <button class="btn btn-back" onclick="showExcelStep(1)">← 重新選檔</button>
+          <button class="save-btn" style="flex:1" onclick="excelToStep3()">預覽人員 →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Select Staff -->
+      <div id="excelStep3" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">選擇要匯入的銷售人員</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn" style="background:var(--card2);color:var(--text2);border:1px solid var(--border);font-size:12px;padding:5px 10px" onclick="toggleAllStaff(true)">全選</button>
+            <button class="btn" style="background:var(--card2);color:var(--text2);border:1px solid var(--border);font-size:12px;padding:5px 10px" onclick="toggleAllStaff(false)">全不選</button>
+          </div>
+        </div>
+        <div class="staff-list" id="excelStaffList"></div>
+        <div class="excel-step-btns">
+          <button class="btn btn-back" onclick="showExcelStep(2)">← 欄位對應</button>
+          <button class="save-btn" style="flex:1" onclick="saveExcelData()">✅ 儲存業績</button>
         </div>
       </div>
     </div>
@@ -638,7 +728,7 @@ function renderStageBody(m,calc,grade){
       <div class="hero-right">
         <div class="hero-lbl">門市整體達成率 · STAGE ${m} ${MONTHS[m-1]}</div>
         <div class="hero-bar-trk"><div class="hero-bar-fill" style="width:${cap(pct)}%;background:${gc}"></div></div>
-        <div class="hero-sub">${pct==null?'尚無業績資料，請設定目標並上傳照片記錄':pct>=100?'🎉 完美！全員通關！':pct>=85?'✅ 達標！繼續保持':pct>=70?'📈 接近目標，加油衝刺':'⚡ 需要大力衝刺！'}</div>
+        <div class="hero-sub">${pct==null?'尚無業績資料，請設定目標並上傳業績 Excel':pct>=100?'🎉 完美！全員通關！':pct>=85?'✅ 達標！繼續保持':pct>=70?'📈 接近目標，加油衝刺':'⚡ 需要大力衝刺！'}</div>
       </div>
     </div>`;
 
@@ -686,7 +776,7 @@ function renderStageBody(m,calc,grade){
               <div class="char-type">${plbl}</div>
             </div>
             <div class="pcard-info">
-              <div class="pcard-name">${name}</div>
+              <div class="pcard-name">${name}${rows[0]?.shin?`<span class="staff-shin-tag">${rows[0].shin}</span>`:''}</div>
               <div class="pcard-contrib-row">
                 <div class="pcard-contrib-pct">${salesContrib}%</div>
                 <div class="pcard-contrib-lbl">銷售貢獻<br>${status}</div>
@@ -945,7 +1035,194 @@ function savePhotoData(){
   showToast(`✅ ${MONTHS[m-1]} 業績資料已儲存`,'ok');
 }
 
-// ── Misc ──────────────────────────────────────────
+// ── Excel Upload ───────────────────────────────────
+let _excelRaw=[];
+let _excelHeaders=[];
+let _excelStaffMap=new Map();
+
+const COL_HINTS={
+  shin:['薪號','員工編號','工號','員工號','id','ID','emp'],
+  name:['姓名','名稱','名字','員工姓名','name'],
+  sales:['銷售額','業績','銷售金額','sales','金額'],
+  accRate:['配件率','配件%','配件比率','acc'],
+  iphone:['iphone','iPhone','手機'],
+  mac:['mac','Mac','電腦'],
+  ipad:['ipad','iPad','平板'],
+  watch:['watch','Watch','手錶'],
+  ac:['applecare','AppleCare','apple care','AC'],
+  justCare:['justcare','just care','JC','Just Care'],
+};
+
+function autoDetectCol(headers,hints){
+  for(const h of hints){
+    const found=headers.find(c=>c.toLowerCase().includes(h.toLowerCase()));
+    if(found)return found;
+  }
+  return '';
+}
+
+function openExcelModal(month){
+  const m=month||new Date().getMonth()+1;
+  const sel=$('excelMonth');
+  sel.innerHTML=MONTHS.map((lbl,i)=>`<option value="${i+1}"${i+1===m?' selected':''}>${lbl}</option>`).join('');
+  _excelRaw=[];_excelHeaders=[];_excelStaffMap=new Map();
+  $('excelFileInp').value='';
+  showExcelStep(1);
+  $('excelOverlay').classList.add('open');
+}
+
+function closeExcelModal(){$('excelOverlay').classList.remove('open');}
+
+function showExcelStep(n){
+  [1,2,3].forEach(i=>{
+    $('excelStep'+i).style.display=i===n?'':'none';
+    const p=$('spill'+i);
+    p.classList.toggle('active',i===n);
+    p.classList.toggle('done',i<n);
+  });
+}
+
+function handleExcelFile(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(rows.length<2){showToast('檔案內容為空或格式有誤','err');return;}
+      _excelHeaders=rows[0].map(h=>String(h??'').trim()).filter(h=>h);
+      if(!_excelHeaders.length){showToast('無法讀取欄位標題，請確認第一列為標題列','err');return;}
+      _excelRaw=rows.slice(1).map(row=>{
+        const obj={};
+        _excelHeaders.forEach((h,i)=>{obj[h]=row[i]??'';});
+        return obj;
+      }).filter(row=>_excelHeaders.some(h=>String(row[h]||'').trim()!==''));
+      if(!_excelRaw.length){showToast('找不到任何資料列','err');return;}
+      buildColMapGrid();
+      showExcelStep(2);
+    }catch(err){
+      console.error(err);
+      showToast('檔案解析失敗，請確認格式','err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildColMapGrid(){
+  const fields=[
+    {key:'shin',lbl:'薪號（必填）'},
+    {key:'name',lbl:'姓名'},
+    {key:'sales',lbl:'銷售額（元）'},
+    {key:'accRate',lbl:'配件率（%）'},
+    {key:'iphone',lbl:'iPhone（台）'},
+    {key:'mac',lbl:'Mac（台）'},
+    {key:'ipad',lbl:'iPad（台）'},
+    {key:'watch',lbl:'Watch（台）'},
+    {key:'ac',lbl:'AppleCare（台）'},
+    {key:'justCare',lbl:'Just Care（台）'},
+  ];
+  const grid=$('colMapGrid');
+  grid.innerHTML=fields.map(f=>{
+    const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]);
+    const opts=['（略過）',..._excelHeaders].map(h=>`<option value="${h}"${h===auto?' selected':''}>${h||'（空欄）'}</option>`).join('');
+    return `<span class="col-map-lbl">${f.lbl}</span>
+      <select class="inp-f" id="cmap_${f.key}" style="font-size:13px">${opts}</select>`;
+  }).join('');
+}
+
+function getColMap(){
+  const keys=['shin','name','sales','accRate','iphone','mac','ipad','watch','ac','justCare'];
+  const map={};
+  keys.forEach(k=>{const el=$('cmap_'+k);map[k]=el&&el.value!=='（略過）'?el.value:'';});
+  return map;
+}
+
+function excelToStep3(){
+  const map=getColMap();
+  if(!map.shin&&!map.name){showToast('請至少指定「薪號」或「姓名」欄位','err');return;}
+  _excelStaffMap=new Map();
+  for(const row of _excelRaw){
+    const shin=map.shin?String(row[map.shin]??'').trim():'';
+    const name=map.name?String(row[map.name]??'').trim():'';
+    const key=shin||name;
+    if(!key)continue;
+    if(!_excelStaffMap.has(key))_excelStaffMap.set(key,{shin,name,rows:[]});
+    _excelStaffMap.get(key).rows.push(row);
+  }
+  if(!_excelStaffMap.size){showToast('未偵測到任何人員資料，請確認薪號/姓名欄位','err');return;}
+  const list=$('excelStaffList');
+  list.innerHTML='';
+  for(const[key,s]of _excelStaffMap){
+    const div=document.createElement('div');
+    div.className='staff-item';
+    div.innerHTML=`
+      <input type="checkbox" checked id="sc_${key.replace(/\W/g,'_')}" class="staff-chk" value="${key}">
+      <label for="sc_${key.replace(/\W/g,'_')}">
+        ${s.shin?`<span class="shin-badge">${s.shin}</span>`:''}
+        <span style="font-weight:700">${s.name||s.shin||key}</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:auto">${s.rows.length}筆</span>
+      </label>`;
+    list.appendChild(div);
+  }
+  showExcelStep(3);
+}
+
+function toggleAllStaff(checked){
+  document.querySelectorAll('.staff-chk').forEach(cb=>cb.checked=checked);
+}
+
+function saveExcelData(){
+  const map=getColMap();
+  const m=parseInt($('excelMonth').value);
+  const checked=[...document.querySelectorAll('.staff-chk:checked')].map(cb=>cb.value);
+  if(!checked.length){showToast('請至少選擇一位人員','err');return;}
+  const staffRows=[];
+  for(const key of checked){
+    const s=_excelStaffMap.get(key);if(!s)continue;
+    const agg={
+      name:s.name||s.shin||key,
+      shin:s.shin||'',
+      sales:0,accRate:0,iphone:0,mac:0,ipad:0,watch:0,ac:0,justCare:0,
+      _an:0,_ad:0
+    };
+    const mainK=['iphone','mac','ipad','watch'];
+    for(const row of s.rows){
+      if(map.sales)agg.sales+=parseN(row[map.sales]);
+      if(map.iphone)agg.iphone+=parseN(row[map.iphone]);
+      if(map.mac)agg.mac+=parseN(row[map.mac]);
+      if(map.ipad)agg.ipad+=parseN(row[map.ipad]);
+      if(map.watch)agg.watch+=parseN(row[map.watch]);
+      if(map.ac)agg.ac+=parseN(row[map.ac]);
+      if(map.justCare)agg.justCare+=parseN(row[map.justCare]);
+      if(map.accRate){
+        const u=mainK.reduce((s,k)=>s+(map[k]?parseN(row[map[k]]):0),0);
+        agg._an+=parseN(row[map.accRate])*u;
+        agg._ad+=u;
+      }
+    }
+    if(map.accRate)agg.accRate=agg._ad>0?agg._an/agg._ad:(s.rows.length===1?parseN(s.rows[0][map.accRate]):0);
+    delete agg._an;delete agg._ad;
+    staffRows.push(agg);
+  }
+  if(!S.perf)S.perf={months:{}};
+  if(!S.perf.months)S.perf.months={};
+  S.perf.months[m]={staffRows};
+  savePerf(S.perf);
+  renderStages();renderSummary();
+  if($('view-stage').classList.contains('v-on')&&currentStage===m){
+    const st=monthStatus(m),calc=calcMonth(m);
+    const grade=st==='active'?'active':gradeOf(calc?.overall??null);
+    $('sv-hdr').style.background=GRADE.bg[grade];
+    $('sv-badge').textContent=GRADE.lbl[grade];
+    renderStageBody(m,calc,grade);
+  }
+  closeExcelModal();
+  showToast(`✅ ${MONTHS[m-1]} 業績已匯入（${staffRows.length}人）`,'ok');
+}
+
+// ── Misc ────────────────────────────────────────────
 function setYear(y){S.year=y;$('mapLbl').textContent=y;S.perf=loadPerf();renderStages();renderSummary();}
 function showToast(msg,type='ok'){const t=$('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3200);}
 
