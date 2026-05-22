@@ -1064,27 +1064,45 @@ function savePhotoData(){
 
 // ── Excel Upload ───────────────────────────────────
 let _excelRaw=[];
-let _excelHeaders=[];
+let _excelHeaders=[];       // column keys: always A/B/C...
+let _excelSamples={};       // col letter → first data row value (for display)
+let _excelColHeaders={};    // col letter → header row text (if any)
 let _excelStaffMap=new Map();
 let _allRawRows=[];
 
 const COL_HINTS={
-  shin:['薪號','員工編號','工號','員工號','id','ID','emp'],
-  name:['姓名','名稱','名字','員工姓名','name'],
-  sales:['銷售額','業績','銷售金額','sales','金額'],
-  accRate:['配件率','配件%','配件比率','acc'],
-  iphone:['iphone','iPhone','手機'],
-  mac:['mac','Mac','電腦'],
-  ipad:['ipad','iPad','平板'],
-  watch:['watch','Watch','手錶'],
-  ac:['applecare','AppleCare','apple care','AC'],
-  justCare:['justcare','just care','JC','Just Care'],
+  shin:['薪號','員工編號','工號','員工號','emp id'],
+  name:['姓名','名稱','名字','員工姓名'],
+  sales:['銷售額','業績','銷售金額','金額','amount','price','單價','總價'],
+  accRate:['配件率','配件%','配件比率'],
+  iphone:['iphone','iPhone'],
+  mac:['mac','Mac'],
+  ipad:['ipad','iPad'],
+  watch:['watch','Watch'],
+  ac:['applecare','AppleCare','apple care'],
+  justCare:['justcare','just care','justCare','Just Care'],
+  qty:['數量','qty','quantity','件數'],
+  product:['商品名稱','品名','產品名稱','product','商品','品項'],
+};
+
+// Keywords to categorize products from product-name column
+const PROD_KW={
+  iphone:['iphone'],
+  mac:['macbook','mac mini','mac pro','imac','mac studio','mac air'],
+  ipad:['ipad'],
+  watch:['apple watch'],
+  ac:['applecare','apple care+','ac+','applecare+'],
+  justCare:['just care','justcare'],
 };
 
 function autoDetectCol(headers,hints){
   for(const h of hints){
-    const found=headers.find(c=>c.toLowerCase().includes(h.toLowerCase()));
-    if(found)return found;
+    // Check header text first
+    const byHdr=headers.find(c=>(_excelColHeaders[c]||'').toLowerCase().includes(h.toLowerCase()));
+    if(byHdr)return byHdr;
+    // Then check sample value
+    const bySample=headers.find(c=>(_excelSamples[c]||'').toLowerCase().includes(h.toLowerCase()));
+    if(bySample)return bySample;
   }
   return '';
 }
@@ -1171,26 +1189,23 @@ function resetExcelFile(){
 
 function proceedToColMap(){
   const headerRowNum=parseInt($('excelHeaderRow').value);
-  if(headerRowNum===0){
-    // No header: use A, B, C...
-    const maxCols=Math.max(..._allRawRows.map(r=>r.length),1);
-    const colCount=Math.min(maxCols,30);
-    _excelHeaders=Array.from({length:colCount},(_,i)=>String.fromCharCode(65+i));
-    _excelRaw=_allRawRows.map(row=>{
-      const obj={};
-      _excelHeaders.forEach((h,i)=>{obj[h]=String(row[i]??'').trim();});
-      return obj;
-    }).filter(row=>_excelHeaders.some(h=>row[h]!==''));
-  }else{
-    if(_allRawRows.length<headerRowNum){showToast('標題列超出檔案行數','err');return;}
-    _excelHeaders=_allRawRows[headerRowNum-1].map(h=>String(h??'').trim()).filter(h=>h);
-    if(!_excelHeaders.length){showToast('標題列為空，請調整設定','err');return;}
-    _excelRaw=_allRawRows.slice(headerRowNum).map(row=>{
-      const obj={};
-      _excelHeaders.forEach((h,i)=>{obj[h]=String(row[i]??'').trim();});
-      return obj;
-    }).filter(row=>_excelHeaders.some(h=>row[h]!==''));
-  }
+  const maxCols=Math.max(..._allRawRows.map(r=>r.length),1);
+  const colCount=Math.min(maxCols,26);
+  // Always use A/B/C... as internal column keys
+  _excelHeaders=Array.from({length:colCount},(_,i)=>String.fromCharCode(65+i));
+  _excelSamples={};_excelColHeaders={};
+  const headerRow=headerRowNum>0?_allRawRows[headerRowNum-1]:null;
+  const dataStartRow=headerRowNum>0?headerRowNum:0;
+  const sampleRow=_allRawRows[dataStartRow]||[];
+  _excelHeaders.forEach((letter,i)=>{
+    _excelColHeaders[letter]=headerRow?String(headerRow[i]??'').trim():'';
+    _excelSamples[letter]=String(sampleRow[i]??'').trim().slice(0,20);
+  });
+  _excelRaw=_allRawRows.slice(dataStartRow).map(row=>{
+    const obj={};
+    _excelHeaders.forEach((h,i)=>{obj[h]=String(row[i]??'').trim();});
+    return obj;
+  }).filter(row=>_excelHeaders.some(h=>row[h]!==''));
   if(!_excelRaw.length){showToast('找不到任何資料列','err');return;}
   buildColMapGrid();
   showExcelStep(2);
@@ -1198,30 +1213,50 @@ function proceedToColMap(){
 
 function buildColMapGrid(){
   const fields=[
-    {key:'shin',lbl:'薪號（必填）'},
+    {key:'shin',lbl:'薪號'},
     {key:'name',lbl:'姓名'},
-    {key:'sales',lbl:'銷售額（元）'},
-    {key:'accRate',lbl:'配件率（%）'},
-    {key:'iphone',lbl:'iPhone（台）'},
-    {key:'mac',lbl:'Mac（台）'},
-    {key:'ipad',lbl:'iPad（台）'},
-    {key:'watch',lbl:'Watch（台）'},
-    {key:'ac',lbl:'AppleCare（台）'},
-    {key:'justCare',lbl:'Just Care（台）'},
+    {key:'sales',lbl:'銷售金額欄'},
+    {key:'qty', lbl:'數量欄（逐筆）'},
+    {key:'product',lbl:'商品名稱欄（逐筆分類）'},
+    {key:'accRate',lbl:'配件率%（彙總表）'},
+    {key:'iphone',lbl:'iPhone台數（彙總表）'},
+    {key:'mac',lbl:'Mac台數（彙總表）'},
+    {key:'ipad',lbl:'iPad台數（彙總表）'},
+    {key:'watch',lbl:'Watch台數（彙總表）'},
+    {key:'ac',lbl:'AppleCare台數（彙總表）'},
+    {key:'justCare',lbl:'JustCare台數（彙總表）'},
   ];
+  // Build option label: "欄C · 薪號（WG90179406）"
+  function colLabel(letter){
+    const hdr=_excelColHeaders[letter];
+    const smp=_excelSamples[letter];
+    return `欄${letter}${hdr?` · ${hdr}`:''}${smp?`（${smp}）`:''}`;
+  }
   const grid=$('colMapGrid');
-  grid.innerHTML=fields.map(f=>{
-    const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]);
-    const opts=['（略過）',..._excelHeaders].map(h=>`<option value="${h}"${h===auto?' selected':''}>${h||'（空欄）'}</option>`).join('');
-    return `<span class="col-map-lbl">${f.lbl}</span>
-      <select class="inp-f" id="cmap_${f.key}" style="font-size:13px">${opts}</select>`;
-  }).join('');
+  grid.innerHTML=`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px;font-size:11px">── 人員識別 ──</span><span></span>`
+    +fields.slice(0,2).map(f=>{
+      const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]||[]);
+      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===auto?' selected':''}>${colLabel(h)}</option>`).join('');
+      return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
+    }).join('')
+    +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin:4px 0;font-size:11px">── 金額與數量 ──</span><span></span>`
+    +fields.slice(2,4).map(f=>{
+      const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]||[]);
+      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===auto?' selected':''}>${colLabel(h)}</option>`).join('');
+      return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
+    }).join('')
+    +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin:4px 0;font-size:11px">── 商品分類（逐筆模式：選商品名稱欄；彙總模式：選各台數欄）──</span><span></span>`
+    +fields.slice(4).map(f=>{
+      const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]||[]);
+      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===auto?' selected':''}>${colLabel(h)}</option>`).join('');
+      return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
+    }).join('');
 }
 
 function getColMap(){
-  const keys=['shin','name','sales','accRate','iphone','mac','ipad','watch','ac','justCare'];
+  const keys=['shin','name','sales','qty','product','accRate','iphone','mac','ipad','watch','ac','justCare'];
   const map={};
-  keys.forEach(k=>{const el=$('cmap_'+k);map[k]=el&&el.value!=='（略過）'?el.value:'';});
+  keys.forEach(k=>{const el=$('cmap_'+k);map[k]=el&&el.value?el.value:'';});
   return map;
 }
 
@@ -1264,32 +1299,58 @@ function saveExcelData(){
   const m=parseInt($('excelMonth').value);
   const checked=[...document.querySelectorAll('.staff-chk:checked')].map(cb=>cb.value);
   if(!checked.length){showToast('請至少選擇一位人員','err');return;}
+
+  const isTransactionMode=!!map.product; // 逐筆模式：有商品名稱欄
   const staffRows=[];
+
   for(const key of checked){
     const s=_excelStaffMap.get(key);if(!s)continue;
     const agg={
       name:s.name||s.shin||key,
       shin:s.shin||'',
       sales:0,accRate:0,iphone:0,mac:0,ipad:0,watch:0,ac:0,justCare:0,
-      _an:0,_ad:0
     };
-    const mainK=['iphone','mac','ipad','watch'];
-    for(const row of s.rows){
-      if(map.sales)agg.sales+=parseN(row[map.sales]);
-      if(map.iphone)agg.iphone+=parseN(row[map.iphone]);
-      if(map.mac)agg.mac+=parseN(row[map.mac]);
-      if(map.ipad)agg.ipad+=parseN(row[map.ipad]);
-      if(map.watch)agg.watch+=parseN(row[map.watch]);
-      if(map.ac)agg.ac+=parseN(row[map.ac]);
-      if(map.justCare)agg.justCare+=parseN(row[map.justCare]);
-      if(map.accRate){
-        const u=mainK.reduce((s,k)=>s+(map[k]?parseN(row[map[k]]):0),0);
-        agg._an+=parseN(row[map.accRate])*u;
-        agg._ad+=u;
+
+    if(isTransactionMode){
+      // 逐筆交易模式：按商品名稱關鍵字分類
+      let accAmt=0,mainQty=0;
+      for(const row of s.rows){
+        const pname=(row[map.product]||'').toLowerCase();
+        const qty=map.qty?Math.max(parseN(row[map.qty]),1):1;
+        const amt=map.sales?parseN(row[map.sales]):0;
+        agg.sales+=amt;
+        let matched=false;
+        for(const[cat,kws]of Object.entries(PROD_KW)){
+          if(kws.some(kw=>pname.includes(kw))){
+            if(cat==='ac'||cat==='justCare'){agg[cat]+=qty;}
+            else{agg[cat]+=qty;mainQty+=qty;}
+            matched=true;break;
+          }
+        }
+        if(!matched){accAmt+=amt;} // 未匹配到主商品→視為配件金額
       }
+      // 配件率 = 配件金額 / 主商品台數（若無主商品台數則用配件金額/總銷售額）
+      if(mainQty>0)agg.accRate=Math.round(accAmt/mainQty);
+      else if(agg.sales>0)agg.accRate=Math.round(accAmt/agg.sales*100);
+    }else{
+      // 彙總表模式：每列直接讀取各欄數值
+      const mainK=['iphone','mac','ipad','watch'];
+      let an=0,ad=0;
+      for(const row of s.rows){
+        if(map.sales)agg.sales+=parseN(row[map.sales]);
+        if(map.iphone)agg.iphone+=parseN(row[map.iphone]);
+        if(map.mac)agg.mac+=parseN(row[map.mac]);
+        if(map.ipad)agg.ipad+=parseN(row[map.ipad]);
+        if(map.watch)agg.watch+=parseN(row[map.watch]);
+        if(map.ac)agg.ac+=parseN(row[map.ac]);
+        if(map.justCare)agg.justCare+=parseN(row[map.justCare]);
+        if(map.accRate){
+          const u=mainK.reduce((s,k)=>s+(map[k]?parseN(row[map[k]]):0),0);
+          an+=parseN(row[map.accRate])*u;ad+=u;
+        }
+      }
+      if(map.accRate)agg.accRate=ad>0?an/ad:(s.rows.length===1?parseN(s.rows[0][map.accRate]):0);
     }
-    if(map.accRate)agg.accRate=agg._ad>0?agg._an/agg._ad:(s.rows.length===1?parseN(s.rows[0][map.accRate]):0);
-    delete agg._an;delete agg._ad;
     staffRows.push(agg);
   }
   if(!S.perf)S.perf={months:{}};
@@ -1305,7 +1366,7 @@ function saveExcelData(){
     renderStageBody(m,calc,grade);
   }
   closeExcelModal();
-  showToast(`✅ ${MONTHS[m-1]} 業績已匯入（${staffRows.length}人）`,'ok');
+  showToast(`✅ ${MONTHS[m-1]} 業績已匯入（${staffRows.length}人，${isTransactionMode?'逐筆':'彙總'}模式）`,'ok');
 }
 
 // ── Misc ────────────────────────────────────────────
