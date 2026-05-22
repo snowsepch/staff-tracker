@@ -313,6 +313,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .excel-month-row label{font-size:13px;font-weight:700;color:var(--text2);white-space:nowrap;}
 .excel-month-sel{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--card);outline:none;}
 .staff-shin-tag{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--card2);color:var(--muted);font-family:monospace;border:1px solid var(--border);margin-left:4px;}
+#excelPreviewTable th{background:var(--card2);padding:5px 8px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;}
+#excelPreviewTable td{padding:4px 8px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+#excelPreviewTable tr:last-child td{border-bottom:none;}
+#excelPreviewTable tr.header-row th{background:var(--purple);color:#fff;}
 
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 @media(max-width:700px){
@@ -457,9 +461,22 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 
       <!-- Step 1: File Upload -->
       <div id="excelStep1">
-        <div class="excel-month-row">
-          <label>月份</label>
-          <select class="excel-month-sel" id="excelMonth"></select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">
+          <div class="excel-month-row" style="margin-bottom:0">
+            <label>月份</label>
+            <select class="excel-month-sel" id="excelMonth"></select>
+          </div>
+          <div class="excel-month-row" style="margin-bottom:0">
+            <label>標題在第幾列</label>
+            <select class="excel-month-sel" id="excelHeaderRow">
+              <option value="1">第 1 列</option>
+              <option value="2">第 2 列</option>
+              <option value="3">第 3 列</option>
+              <option value="4">第 4 列</option>
+              <option value="5">第 5 列</option>
+              <option value="0">無標題列（A / B / C…）</option>
+            </select>
+          </div>
         </div>
         <div class="drop-zone" onclick="document.getElementById('excelFileInp').click()">
           <div class="drop-zone-icon">📊</div>
@@ -467,7 +484,17 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
           <div class="drop-zone-sub">支援 .xlsx / .xls / .csv 格式</div>
         </div>
         <input type="file" id="excelFileInp" accept=".xlsx,.xls,.csv" class="file-inp" onchange="handleExcelFile(event)">
-        <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">上傳後系統會自動偵測所有銷售人員（薪號），再由您手動選擇要匯入的人員</p>
+        <!-- Preview table (shown after file parsed) -->
+        <div id="excelPreviewWrap" style="display:none;margin-top:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">檔案預覽（前 5 列）— 請確認標題列設定正確後按「下一步」</div>
+          <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;max-height:180px;overflow-y:auto">
+            <table id="excelPreviewTable" style="width:100%;border-collapse:collapse;font-size:11px"></table>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-back" onclick="resetExcelFile()">← 重新選擇</button>
+            <button class="save-btn" style="flex:1" onclick="proceedToColMap()">下一步：欄位對應 →</button>
+          </div>
+        </div>
       </div>
 
       <!-- Step 2: Column Mapping -->
@@ -1039,6 +1066,7 @@ function savePhotoData(){
 let _excelRaw=[];
 let _excelHeaders=[];
 let _excelStaffMap=new Map();
+let _allRawRows=[];
 
 const COL_HINTS={
   shin:['薪號','員工編號','工號','員工號','id','ID','emp'],
@@ -1065,8 +1093,15 @@ function openExcelModal(month){
   const m=month||new Date().getMonth()+1;
   const sel=$('excelMonth');
   sel.innerHTML=MONTHS.map((lbl,i)=>`<option value="${i+1}"${i+1===m?' selected':''}>${lbl}</option>`).join('');
-  _excelRaw=[];_excelHeaders=[];_excelStaffMap=new Map();
+  _excelRaw=[];_excelHeaders=[];_excelStaffMap=new Map();_allRawRows=[];
   $('excelFileInp').value='';
+  $('excelPreviewWrap').style.display='none';
+  // Re-render preview when header row changes (bind once, skip if already bound)
+  const hrSel=$('excelHeaderRow');
+  if(hrSel&&!hrSel._bound){
+    hrSel._bound=true;
+    hrSel.addEventListener('change',()=>{if(_allRawRows.length)renderExcelPreview();});
+  }
   showExcelStep(1);
   $('excelOverlay').classList.add('open');
 }
@@ -1088,26 +1123,77 @@ function handleExcelFile(event){
   reader.onload=e=>{
     try{
       const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array'});
+      // codepage 950 = Big5 Traditional Chinese, needed for old .xls from TW POS systems
+      const isOldXls=file.name.toLowerCase().endsWith('.xls');
+      const wb=XLSX.read(data,{type:'array',codepage:isOldXls?950:undefined,cellDates:true});
       const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      if(rows.length<2){showToast('檔案內容為空或格式有誤','err');return;}
-      _excelHeaders=rows[0].map(h=>String(h??'').trim()).filter(h=>h);
-      if(!_excelHeaders.length){showToast('無法讀取欄位標題，請確認第一列為標題列','err');return;}
-      _excelRaw=rows.slice(1).map(row=>{
-        const obj={};
-        _excelHeaders.forEach((h,i)=>{obj[h]=row[i]??'';});
-        return obj;
-      }).filter(row=>_excelHeaders.some(h=>String(row[h]||'').trim()!==''));
-      if(!_excelRaw.length){showToast('找不到任何資料列','err');return;}
-      buildColMapGrid();
-      showExcelStep(2);
+      _allRawRows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+      if(!_allRawRows.length){showToast('檔案內容為空','err');return;}
+      renderExcelPreview();
     }catch(err){
       console.error(err);
       showToast('檔案解析失敗，請確認格式','err');
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+function renderExcelPreview(){
+  const headerRowNum=parseInt($('excelHeaderRow').value);
+  // Show preview of first 8 rows (highlight header row)
+  const previewRows=_allRawRows.slice(0,8);
+  const maxCols=Math.max(...previewRows.map(r=>r.length),1);
+  const colCount=Math.min(maxCols,15);
+  let html='<thead><tr>';
+  html+=`<th>#</th>`;
+  for(let c=0;c<colCount;c++) html+=`<th>${String.fromCharCode(65+c)}</th>`;
+  html+='</tr></thead><tbody>';
+  previewRows.forEach((row,ri)=>{
+    const isHeader=headerRowNum>0&&(ri+1===headerRowNum);
+    html+=`<tr${isHeader?' style="background:#EDE9FE"':''}>`;
+    html+=`<td style="color:var(--muted);font-size:10px;text-align:right">${ri+1}${isHeader?' ★':''}</td>`;
+    for(let c=0;c<colCount;c++){
+      const v=String(row[c]??'');
+      html+=`<td title="${v}">${v.slice(0,18)||'&nbsp;'}</td>`;
+    }
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  $('excelPreviewTable').innerHTML=html;
+  $('excelPreviewWrap').style.display='';
+}
+
+function resetExcelFile(){
+  _allRawRows=[];_excelRaw=[];_excelHeaders=[];_excelStaffMap=new Map();
+  $('excelFileInp').value='';
+  $('excelPreviewWrap').style.display='none';
+}
+
+function proceedToColMap(){
+  const headerRowNum=parseInt($('excelHeaderRow').value);
+  if(headerRowNum===0){
+    // No header: use A, B, C...
+    const maxCols=Math.max(..._allRawRows.map(r=>r.length),1);
+    const colCount=Math.min(maxCols,30);
+    _excelHeaders=Array.from({length:colCount},(_,i)=>String.fromCharCode(65+i));
+    _excelRaw=_allRawRows.map(row=>{
+      const obj={};
+      _excelHeaders.forEach((h,i)=>{obj[h]=String(row[i]??'').trim();});
+      return obj;
+    }).filter(row=>_excelHeaders.some(h=>row[h]!==''));
+  }else{
+    if(_allRawRows.length<headerRowNum){showToast('標題列超出檔案行數','err');return;}
+    _excelHeaders=_allRawRows[headerRowNum-1].map(h=>String(h??'').trim()).filter(h=>h);
+    if(!_excelHeaders.length){showToast('標題列為空，請調整設定','err');return;}
+    _excelRaw=_allRawRows.slice(headerRowNum).map(row=>{
+      const obj={};
+      _excelHeaders.forEach((h,i)=>{obj[h]=String(row[i]??'').trim();});
+      return obj;
+    }).filter(row=>_excelHeaders.some(h=>row[h]!==''));
+  }
+  if(!_excelRaw.length){showToast('找不到任何資料列','err');return;}
+  buildColMapGrid();
+  showExcelStep(2);
 }
 
 function buildColMapGrid(){
