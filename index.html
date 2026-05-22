@@ -1226,32 +1226,45 @@ function buildColMapGrid(){
     {key:'ac',lbl:'AppleCare台數（彙總表）'},
     {key:'justCare',lbl:'JustCare台數（彙總表）'},
   ];
-  // Build option label: "欄C · 薪號（WG90179406）"
+  const saved=loadColMapSaved();
+  // Build option label: "欄C（WG90179406）"
   function colLabel(letter){
     const hdr=_excelColHeaders[letter];
     const smp=_excelSamples[letter];
     return `欄${letter}${hdr?` · ${hdr}`:''}${smp?`（${smp}）`:''}`;
   }
+  function selectVal(key){
+    // Priority: saved > auto-detect
+    const sv=saved[key];
+    if(sv&&_excelHeaders.includes(sv))return sv;
+    return autoDetectCol(_excelHeaders,COL_HINTS[key]||[]);
+  }
+  const hasSaved=Object.keys(saved).length>0;
   const grid=$('colMapGrid');
-  grid.innerHTML=`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px;font-size:11px">── 人員識別 ──</span><span></span>`
+  grid.innerHTML=(hasSaved?`<span style="grid-column:1/-1;font-size:11px;color:var(--green);margin-bottom:4px">✅ 已載入上次儲存的欄位設定 <button onclick="clearColMapSaved()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;margin-left:6px">清除</button></span><span></span>`:'')
+    +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px;font-size:11px">── 人員識別 ──</span><span></span>`
     +fields.slice(0,2).map(f=>{
-      const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]||[]);
-      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===auto?' selected':''}>${colLabel(h)}</option>`).join('');
+      const sel=selectVal(f.key);
+      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===sel?' selected':''}>${colLabel(h)}</option>`).join('');
       return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
     }).join('')
     +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin:4px 0;font-size:11px">── 金額與數量 ──</span><span></span>`
     +fields.slice(2,4).map(f=>{
-      const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]||[]);
-      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===auto?' selected':''}>${colLabel(h)}</option>`).join('');
+      const sel=selectVal(f.key);
+      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===sel?' selected':''}>${colLabel(h)}</option>`).join('');
       return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
     }).join('')
     +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin:4px 0;font-size:11px">── 商品分類（逐筆模式：選商品名稱欄；彙總模式：選各台數欄）──</span><span></span>`
     +fields.slice(4).map(f=>{
-      const auto=autoDetectCol(_excelHeaders,COL_HINTS[f.key]||[]);
-      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===auto?' selected':''}>${colLabel(h)}</option>`).join('');
+      const sel=selectVal(f.key);
+      const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===sel?' selected':''}>${colLabel(h)}</option>`).join('');
       return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
     }).join('');
 }
+
+function loadColMapSaved(){try{return JSON.parse(localStorage.getItem('stk_colmap')||'{}')}catch{return{};}}
+function saveColMapToStorage(map){localStorage.setItem('stk_colmap',JSON.stringify(map));}
+function clearColMapSaved(){localStorage.removeItem('stk_colmap');buildColMapGrid();showToast('已清除欄位設定','ok');}
 
 function getColMap(){
   const keys=['shin','name','sales','qty','product','accRate','iphone','mac','ipad','watch','ac','justCare'];
@@ -1263,6 +1276,7 @@ function getColMap(){
 function excelToStep3(){
   const map=getColMap();
   if(!map.shin&&!map.name){showToast('請至少指定「薪號」或「姓名」欄位','err');return;}
+  saveColMapToStorage(map); // 記住本次欄位設定
   _excelStaffMap=new Map();
   for(const row of _excelRaw){
     const shin=map.shin?String(row[map.shin]??'').trim():'';
