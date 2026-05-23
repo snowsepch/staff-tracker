@@ -182,7 +182,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 .pm-lbl{font-size:10px;color:var(--muted);width:40px;flex-shrink:0;}
 .pm-trk{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
 .pm-fill{height:100%;border-radius:3px;transition:width .8s ease;}
-.pm-val{font-size:10px;font-weight:700;color:var(--text2);width:26px;text-align:right;flex-shrink:0;}
+.pm-val{font-size:10px;font-weight:700;color:var(--text2);width:42px;text-align:right;flex-shrink:0;}
 
 /* Inline target panel */
 .tgt-panel{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;}
@@ -358,7 +358,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
         <div class="mini-title">各指標年度平均</div>
         <div class="mini-grid">
           <div class="mini-row"><span class="mini-lbl">銷售額</span><div class="mini-trk"><div class="mini-fill" id="mf0" style="background:var(--gold)"></div></div><span class="mini-val" id="mv0">--</span></div>
-          <div class="mini-row"><span class="mini-lbl">配件率</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--blue)"></div></div><span class="mini-val" id="mv1">--</span></div>
+          <div class="mini-row"><span class="mini-lbl">配件</span><div class="mini-trk"><div class="mini-fill" id="mf1" style="background:var(--blue)"></div></div><span class="mini-val" id="mv1">--</span></div>
           <div class="mini-row"><span class="mini-lbl">主商品</span><div class="mini-trk"><div class="mini-fill" id="mf2" style="background:var(--purple)"></div></div><span class="mini-val" id="mv2">--</span></div>
         </div>
       </div>
@@ -569,14 +569,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 // ── Constants ─────────────────────────────────────
 const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 const METRICS=[
-  {key:'sales',    lbl:'銷售額',    tLbl:'銷售額目標（元）',     unit:'元', color:'#F59E0B'},
-  {key:'accRate',  lbl:'配件率',    tLbl:'配件率目標（%）',      unit:'%',  color:'#3B82F6'},
-  {key:'iphone',   lbl:'iPhone',    tLbl:'iPhone 目標（台）',    unit:'台', color:'#8B5CF6'},
-  {key:'mac',      lbl:'Mac',       tLbl:'Mac 目標（台）',       unit:'台', color:'#F97316'},
-  {key:'ipad',     lbl:'iPad',      tLbl:'iPad 目標（台）',      unit:'台', color:'#06B6D4'},
-  {key:'watch',    lbl:'Watch',     tLbl:'Watch 目標（台）',     unit:'台', color:'#EF4444'},
-  {key:'ac',       lbl:'AppleCare', tLbl:'AppleCare 目標（台）', unit:'台', color:'#10B981'},
-  {key:'justCare', lbl:'Just Care', tLbl:'Just Care 目標（台）', unit:'台', color:'#EC4899'},
+  {key:'sales',     lbl:'銷售額',    tLbl:'銷售額目標（元）',     unit:'元', color:'#F59E0B'},
+  {key:'accAmount', lbl:'配件金額',  tLbl:'配件目標（元）',       unit:'元', color:'#3B82F6'},
+  {key:'iphone',    lbl:'iPhone',    tLbl:'iPhone 目標（台）',    unit:'台', color:'#8B5CF6'},
+  {key:'mac',       lbl:'Mac',       tLbl:'Mac 目標（台）',       unit:'台', color:'#F97316'},
+  {key:'ipad',      lbl:'iPad',      tLbl:'iPad 目標（台）',      unit:'台', color:'#06B6D4'},
+  {key:'watch',     lbl:'Watch',     tLbl:'Watch 目標（台）',     unit:'台', color:'#EF4444'},
+  {key:'ac',        lbl:'AppleCare', tLbl:'AppleCare 目標（套）', unit:'套', color:'#10B981'},
+  {key:'justCare',  lbl:'Just Care', tLbl:'Just Care 目標（套）', unit:'套', color:'#EC4899'},
 ];
 const DOM_ORDER=[1,2,3,4,8,7,6,5,9,10,11,12];
 const GRADE={
@@ -611,11 +611,8 @@ function calcMonth(m){
   if(!md?.staffRows?.length) return null;
   const rows=md.staffRows;
   const tot={};
-  for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate')tot[mk.key]=(tot[mk.key]||0)+(r[mk.key]||0);}
+  for(const r of rows) for(const mk of METRICS){tot[mk.key]=(tot[mk.key]||0)+(r[mk.key]||0);}
   const mainK=['iphone','mac','ipad','watch'];
-  let an=0,ad=0;
-  for(const r of rows){const u=mainK.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
-  tot.accRate=ad>0?an/ad:0;
   const rates={};
   for(const mk of METRICS){const t=targets[mk.key];rates[mk.key]=(t&&t>0)?Math.round((tot[mk.key]||0)/t*100):null;}
   const mainR=mainK.map(k=>rates[k]).filter(v=>v!=null);
@@ -701,7 +698,7 @@ function renderSummary(){
     const c=calcMonth(m);if(!c||c.overall==null)continue;
     oA.push(c.overall);if(c.overall>=100)cleared++;
     if(c.rates.sales!=null)sR.push(c.rates.sales);
-    if(c.rates.accRate!=null)aR.push(c.rates.accRate);
+    if(c.rates.accAmount!=null)aR.push(c.rates.accAmount);
     if(c.mainAvg!=null)mR.push(c.mainAvg);
   }
   const avg=r=>r.length?Math.round(r.reduce((a,b)=>a+b,0)/r.length):null;
@@ -790,17 +787,13 @@ function renderStageBody(m,calc,grade){
       const plbl=PLAYER_LABEL[idx%2];
       const rows=md.staffRows.filter(r=>r.name===name);
       const st={};
-      for(const r of rows) for(const mk of METRICS){if(mk.key!=='accRate')st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0);}
+      for(const r of rows) for(const mk of METRICS){st[mk.key]=(st[mk.key]||0)+(r[mk.key]||0);}
       const mainK=['iphone','mac','ipad','watch'];
-      let an=0,ad=0;
-      for(const r of rows){const u=mainK.reduce((s,k)=>s+(r[k]||0),0);an+=(r.accRate||0)*u;ad+=u;}
-      st.accRate=ad>0?Math.round(an/ad):0;
 
       const totSales=calc?.tot?.sales||0;
       const salesContrib=totSales>0?Math.round(st.sales/totSales*100):0;
       const metricContribs={};
       for(const mk of METRICS){
-        if(mk.key==='accRate'){metricContribs[mk.key]=st.accRate;continue;}
         const totActual=calc?.tot?.[mk.key]||0;
         metricContribs[mk.key]=totActual>0?Math.round(st[mk.key]/totActual*100):0;
       }
@@ -849,14 +842,14 @@ function renderStageBody(m,calc,grade){
           </div>
           <div class="pcard-metrics">`;
 
-      const showMetrics=['iphone','mac','ipad','watch','ac','justCare','accRate'];
+      const showMetrics=['iphone','mac','ipad','watch','ac','justCare','accAmount'];
       for(const key of showMetrics){
         const mk=METRICS.find(m=>m.key===key);
         if(!mk)continue;
         const val=st[key]||0;
         const contrib=metricContribs[key]||0;
-        const barPct=key==='accRate'?cap(val):cap(contrib);
-        const dispVal=key==='accRate'?`${val}%`:`${val}${mk.unit}`;
+        const barPct=cap(contrib);
+        const dispVal=key==='accAmount'?`${(val/10000).toFixed(1)}萬`:`${val}${mk.unit}`;
         html+=`
           <div class="pm-row">
             <span class="pm-lbl">${mk.lbl}</span>
@@ -1010,8 +1003,8 @@ function addPhotoStaffRow(){
         <input class="inp-f photo-sales" type="number" min="0" placeholder="0">
       </div>
       <div class="inp-g">
-        <label class="inp-lbl">配件率（%）</label>
-        <input class="inp-f photo-accRate" type="number" min="0" step="0.1" placeholder="0">
+        <label class="inp-lbl">配件金額（元）</label>
+        <input class="inp-f photo-accAmount" type="number" min="0" placeholder="0">
       </div>
       <div class="inp-g">
         <label class="inp-lbl">iPhone（台）</label>
@@ -1030,11 +1023,11 @@ function addPhotoStaffRow(){
         <input class="inp-f photo-watch" type="number" min="0" placeholder="0">
       </div>
       <div class="inp-g">
-        <label class="inp-lbl">AppleCare（台）</label>
+        <label class="inp-lbl">AppleCare（套）</label>
         <input class="inp-f photo-ac" type="number" min="0" placeholder="0">
       </div>
       <div class="inp-g">
-        <label class="inp-lbl">Just Care（台）</label>
+        <label class="inp-lbl">Just Care（套）</label>
         <input class="inp-f photo-justCare" type="number" min="0" placeholder="0">
       </div>
     </div>`;
@@ -1056,7 +1049,7 @@ function savePhotoData(){
     staffRows.push({
       name,
       sales:parseN(row.querySelector('.photo-sales').value),
-      accRate:parseN(row.querySelector('.photo-accRate').value),
+      accAmount:parseN(row.querySelector('.photo-accAmount').value),
       iphone:parseN(row.querySelector('.photo-iphone').value),
       mac:parseN(row.querySelector('.photo-mac').value),
       ipad:parseN(row.querySelector('.photo-ipad').value),
@@ -1094,7 +1087,7 @@ const COL_HINTS={
   shin:['薪號','員工編號','工號','員工號','emp id'],
   name:['姓名','名稱','名字','員工姓名'],
   sales:['銷售額','業績','銷售金額','金額','amount','price','單價','總價'],
-  accRate:['配件率','配件%','配件比率'],
+  accAmount:['配件金額','配件業績','配件總額','配件'],
   iphone:['iphone','iPhone'],
   mac:['mac','Mac'],
   ipad:['ipad','iPad'],
@@ -1238,7 +1231,7 @@ function buildColMapGrid(){
     {key:'sales',lbl:'銷售金額欄'},
     {key:'qty', lbl:'數量欄（逐筆）'},
     {key:'product',lbl:'商品名稱欄（逐筆分類）'},
-    {key:'accRate',lbl:'配件率%（彙總表）'},
+    {key:'accAmount',lbl:'配件金額（彙總表）'},
     {key:'iphone',lbl:'iPhone台數（彙總表）'},
     {key:'mac',lbl:'Mac台數（彙總表）'},
     {key:'ipad',lbl:'iPad台數（彙總表）'},
@@ -1306,7 +1299,7 @@ function fillKwInputs(){
 }
 
 function getColMap(){
-  const keys=['shin','name','sales','qty','product','accRate','iphone','mac','ipad','watch','ac','justCare'];
+  const keys=['shin','name','sales','qty','product','accAmount','iphone','mac','ipad','watch','ac','justCare'];
   const map={};
   keys.forEach(k=>{const el=$('cmap_'+k);map[k]=el&&el.value?el.value:'';});
   return map;
@@ -1392,7 +1385,7 @@ function saveExcelData(){
     const agg={
       name:s.name||s.shin||key,
       shin:s.shin||'',
-      sales:0,accRate:0,iphone:0,mac:0,ipad:0,watch:0,ac:0,justCare:0,
+      sales:0,accAmount:0,iphone:0,mac:0,ipad:0,watch:0,ac:0,justCare:0,
     };
 
     if(isTransactionMode){
@@ -1403,7 +1396,6 @@ function saveExcelData(){
       Object.entries(kw).forEach(([cat,str])=>{
         kwMap[cat]=str.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
       });
-      let accAmt=0,mainQty=0;
       for(const row of s.rows){
         const pname=(row[map.product]||'').toLowerCase();
         const qty=map.qty?Math.max(parseN(row[map.qty]),1):1;
@@ -1412,34 +1404,24 @@ function saveExcelData(){
         let matched=false;
         for(const[cat,kws]of Object.entries(kwMap)){
           if(kws.some(kw=>pname.includes(kw))){
-            if(cat==='ac'||cat==='justCare'){agg[cat]+=qty;}
-            else{agg[cat]+=qty;mainQty+=qty;}
+            agg[cat]+=qty;
             matched=true;break;
           }
         }
-        if(!matched){accAmt+=amt;} // 未匹配到主商品→視為配件金額
+        if(!matched){agg.accAmount+=amt;} // 未匹配到主商品→視為配件金額
       }
-      // 配件率 = 配件金額 / 主商品台數（若無主商品台數則用配件金額/總銷售額）
-      if(mainQty>0)agg.accRate=Math.round(accAmt/mainQty);
-      else if(agg.sales>0)agg.accRate=Math.round(accAmt/agg.sales*100);
     }else{
       // 彙總表模式：每列直接讀取各欄數值
-      const mainK=['iphone','mac','ipad','watch'];
-      let an=0,ad=0;
       for(const row of s.rows){
         if(map.sales)agg.sales+=parseN(row[map.sales]);
+        if(map.accAmount)agg.accAmount+=parseN(row[map.accAmount]);
         if(map.iphone)agg.iphone+=parseN(row[map.iphone]);
         if(map.mac)agg.mac+=parseN(row[map.mac]);
         if(map.ipad)agg.ipad+=parseN(row[map.ipad]);
         if(map.watch)agg.watch+=parseN(row[map.watch]);
         if(map.ac)agg.ac+=parseN(row[map.ac]);
         if(map.justCare)agg.justCare+=parseN(row[map.justCare]);
-        if(map.accRate){
-          const u=mainK.reduce((s,k)=>s+(map[k]?parseN(row[map[k]]):0),0);
-          an+=parseN(row[map.accRate])*u;ad+=u;
-        }
       }
-      if(map.accRate)agg.accRate=ad>0?an/ad:(s.rows.length===1?parseN(s.rows[0][map.accRate]):0);
     }
     staffRows.push(agg);
   }
@@ -1460,13 +1442,33 @@ function saveExcelData(){
 }
 
 // ── Misc ────────────────────────────────────────────
-function setYear(y){S.year=y;$('mapLbl').textContent=y;S.perf=loadPerf();renderStages();renderSummary();}
+function setYear(y){S.year=y;$('mapLbl').textContent=y;S.perf=loadPerf();autoPopulateMayTargets();renderStages();renderSummary();}
 function showToast(msg,type='ok'){const t=$('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3200);}
+
+// 5月右昌(027)預設目標：Mac27 / iPad70 / iPhone125 / Watch30 / AC6 / JC2 / 配件124.5萬 / 業績830萬
+function autoPopulateMayTargets(){
+  if(S.year!==2026)return;
+  const tgts=loadTgts();
+  const may=tgts[5];
+  if(may&&Object.values(may).some(v=>v&&v>0))return;
+  tgts[5]={
+    sales:8300000,
+    accAmount:1245000,
+    iphone:125,
+    mac:27,
+    ipad:70,
+    watch:30,
+    ac:6,
+    justCare:2
+  };
+  saveTgts(tgts);
+}
 
 function init(){
   const cy=new Date().getFullYear(),sel=$('yearSel');sel.innerHTML='';
   for(let y=cy-1;y<=cy+1;y++){const o=document.createElement('option');o.value=y;o.textContent=`${y} 年`;if(y===cy)o.selected=true;sel.appendChild(o);}
   S.year=cy;S.perf=loadPerf();$('mapLbl').textContent=cy;
+  autoPopulateMayTargets();
   renderStages();renderSummary();
   window.addEventListener('resize',()=>requestAnimationFrame(drawPath));
 }
