@@ -329,6 +329,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -547,6 +548,41 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
   </div>
 </div>
 
+<!-- TARGET PHOTO OCR MODAL -->
+<div class="t-overlay" id="tgtOcrOverlay" onclick="if(event.target===this)closeTgtOcrModal()">
+  <div class="t-modal" style="max-width:780px">
+    <div class="t-head">
+      <div class="t-title">📷 從照片辨識目標（027 右昌）</div>
+      <button class="close-btn" onclick="closeTgtOcrModal()">✕</button>
+    </div>
+    <div class="t-body">
+      <div class="excel-month-row">
+        <label>套用到月份</label>
+        <select class="excel-month-sel" id="tgtOcrMonth"></select>
+      </div>
+      <div class="drop-zone" onclick="document.getElementById('tgtOcrFileInp').click()">
+        <div class="drop-zone-icon">📷</div>
+        <div class="drop-zone-title">點擊選擇目標照片</div>
+        <div class="drop-zone-sub">支援 .jpg / .png — 含 027 右昌那一列數字</div>
+      </div>
+      <input type="file" id="tgtOcrFileInp" accept="image/*" class="file-inp" onchange="handleTgtOcrFile(event)">
+      <div id="tgtOcrPreview" style="display:none;margin-top:10px">
+        <img id="tgtOcrImg" style="max-width:100%;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;max-height:240px;object-fit:contain;display:block">
+        <div id="tgtOcrStatus" style="font-size:13px;color:var(--text2);margin-bottom:10px;padding:8px 12px;background:var(--card2);border-radius:8px"></div>
+        <div id="tgtOcrResult" style="display:none">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">辨識結果（請確認後再套用）</div>
+          <div class="inp-grid" id="tgtOcrFields"></div>
+          <button class="save-btn" onclick="applyTgtOcr()">✅ 套用到目標</button>
+        </div>
+        <details id="tgtOcrRawWrap" style="margin-top:12px;display:none">
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer">查看原始 OCR 文字（除錯用）</summary>
+          <pre id="tgtOcrRaw" style="font-size:11px;color:var(--text2);background:var(--card2);padding:8px;border-radius:6px;margin-top:6px;white-space:pre-wrap;max-height:140px;overflow-y:auto"></pre>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TARGET MODAL -->
 <div class="t-overlay" id="tOverlay" onclick="if(event.target===this)closeTargetModal()">
   <div class="t-modal">
@@ -555,7 +591,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
       <button class="close-btn" onclick="closeTargetModal()">✕</button>
     </div>
     <div class="t-body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">請對照當月目標 PDF，逐項填入數字後按「儲存目標」。</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px">
+        <p style="font-size:12px;color:var(--muted);margin:0">請對照當月目標 PDF/截圖，逐項填入後按「儲存目標」。</p>
+        <button class="btn" style="background:#FEF3C7;color:#D97706;border:1.5px solid #FDE68A;font-size:12px;padding:6px 12px;white-space:nowrap" onclick="openTgtOcrModal(tModalMonth)">📷 從照片辨識</button>
+      </div>
       <div class="m-tabs" id="mTabs"></div>
       <div class="inp-grid" id="tForm"></div>
       <button class="save-btn" onclick="saveTargetModal()">✅ 儲存目標</button>
@@ -1439,6 +1478,113 @@ function saveExcelData(){
   }
   closeExcelModal();
   showToast(`✅ ${MONTHS[m-1]} 業績已匯入（${staffRows.length}人，${isTransactionMode?'逐筆':'彙總'}模式）`,'ok');
+}
+
+// ── Target Photo OCR ───────────────────────────────
+let _tgtOcrParsed=null;
+
+function openTgtOcrModal(month){
+  const m=month||tModalMonth||new Date().getMonth()+1;
+  $('tgtOcrMonth').innerHTML=MONTHS.map((lbl,i)=>`<option value="${i+1}"${i+1===m?' selected':''}>${lbl}</option>`).join('');
+  $('tgtOcrFileInp').value='';
+  $('tgtOcrPreview').style.display='none';
+  $('tgtOcrResult').style.display='none';
+  $('tgtOcrRawWrap').style.display='none';
+  _tgtOcrParsed=null;
+  $('tgtOcrOverlay').classList.add('open');
+}
+
+function closeTgtOcrModal(){$('tgtOcrOverlay').classList.remove('open');}
+
+async function handleTgtOcrFile(event){
+  const file=event.target.files[0];if(!file)return;
+  if(typeof Tesseract==='undefined'){showToast('Tesseract.js 尚未載入完成，請稍候','err');return;}
+  const url=URL.createObjectURL(file);
+  $('tgtOcrImg').src=url;
+  $('tgtOcrPreview').style.display='';
+  $('tgtOcrStatus').textContent='⏳ 辨識中…首次使用會下載中文字典約 10MB';
+  $('tgtOcrResult').style.display='none';
+  $('tgtOcrRawWrap').style.display='none';
+  try{
+    const result=await Tesseract.recognize(url,'chi_tra+eng',{
+      logger:msg=>{
+        if(msg.status==='recognizing text')$('tgtOcrStatus').textContent=`⏳ 辨識中… ${Math.round(msg.progress*100)}%`;
+        else if(msg.status==='downloading')$('tgtOcrStatus').textContent=`⏳ 下載中文字典中… ${Math.round(msg.progress*100)}%`;
+      }
+    });
+    URL.revokeObjectURL(url);
+    parseTgtOcrText(result.data.text);
+  }catch(err){
+    console.error(err);
+    $('tgtOcrStatus').textContent='❌ 辨識失敗：'+(err.message||err);
+  }
+}
+
+function parseTgtOcrText(text){
+  $('tgtOcrRaw').textContent=text;
+  $('tgtOcrRawWrap').style.display='';
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  // 找含 027 / 右昌 / 0Z7 等變體的列
+  const rcLine=lines.find(l=>/027|右昌|[O0]2[7T]/.test(l));
+  if(!rcLine){
+    $('tgtOcrStatus').textContent='⚠️ 找不到 027/右昌 那列，可展開「原始 OCR 文字」確認，或手動填入';
+    _tgtOcrParsed={};
+    renderTgtOcrFields();
+    $('tgtOcrResult').style.display='';
+    return;
+  }
+  const nums=(rcLine.match(/\d+(?:\.\d+)?/g)||[]).filter(n=>n!=='027');
+  if(nums.length<8){
+    $('tgtOcrStatus').textContent=`⚠️ 該列只抓到 ${nums.length} 個數字（需 8 個）：${nums.join(', ')}。請手動補齊`;
+    _tgtOcrParsed={};
+    renderTgtOcrFields();
+    $('tgtOcrResult').style.display='';
+    return;
+  }
+  // 順序：Mac, iPad, iPhone, Watch, AC, JC, 配件(萬), 業績(萬)
+  const [mac,ipad,iphone,watch,ac,jc,acc,sales]=nums.slice(0,8).map(parseFloat);
+  _tgtOcrParsed={
+    sales:Math.round(sales*10000),
+    accAmount:Math.round(acc*10000),
+    iphone:Math.round(iphone),
+    mac:Math.round(mac),
+    ipad:Math.round(ipad),
+    watch:Math.round(watch),
+    ac:Math.round(ac),
+    justCare:Math.round(jc)
+  };
+  let warn='';
+  if(acc>1000)warn+=' ⚠️配件可能丟小數點';
+  if(sales>5000)warn+=' ⚠️業績可能丟小數點';
+  $('tgtOcrStatus').textContent=`✅ 已辨識 027 那列${warn}`;
+  renderTgtOcrFields();
+  $('tgtOcrResult').style.display='';
+}
+
+function renderTgtOcrFields(){
+  const grid=$('tgtOcrFields');
+  grid.innerHTML=METRICS.map(mk=>`
+    <div class="inp-g">
+      <label class="inp-lbl">${mk.tLbl}</label>
+      <input class="inp-f" id="ocr-inp-${mk.key}" type="number" min="0" placeholder="0" value="${_tgtOcrParsed?.[mk.key]||''}">
+    </div>`).join('');
+}
+
+function applyTgtOcr(){
+  const m=parseInt($('tgtOcrMonth').value);
+  const tgts=loadTgts();
+  tgts[m]={};
+  for(const mk of METRICS){
+    tgts[m][mk.key]=parseN($('ocr-inp-'+mk.key)?.value);
+  }
+  saveTgts(tgts);
+  renderStages();renderSummary();
+  if($('tOverlay').classList.contains('open')){
+    tModalMonth=m;
+    renderTabs();selectTab(m);
+  }
+  closeTgtOcrModal();
+  showToast(`✅ ${MONTHS[m-1]} 目標已套用`,'ok');
 }
 
 // ── Misc ────────────────────────────────────────────
