@@ -500,8 +500,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 
       <!-- Step 2: Column Mapping -->
       <div id="excelStep2" style="display:none">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">確認欄位對應</div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">系統已自動偵測欄位，如有錯誤請手動調整。「（略過）」表示該欄位無資料。</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">確認欄位對應</div>
+          <button class="btn" style="background:var(--purple);color:#fff;font-size:12px;padding:6px 12px;white-space:nowrap" onclick="applyPosPreset()">⚡ 一鍵套用 POS 逐筆預設</button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">系統已自動偵測欄位，如有錯誤請手動調整。「（略過）」表示該欄位無資料。POS 逐筆 Excel 可按右上方按鈕套用標準對應（H薪號/Q姓名/O銷售/M數量/J商品名稱）。</p>
         <div class="col-map-grid" id="colMapGrid"></div>
         <!-- 商品分類關鍵字 -->
         <div style="margin-top:14px">
@@ -1335,6 +1338,32 @@ function fillKwInputs(){
   ['iphone','mac','ipad','watch','ac','justCare'].forEach(k=>{
     const el=$('kw_'+k);if(el)el.value=kw[k]||DEFAULT_KW[k];
   });
+}
+
+// POS 逐筆 Excel 預設（依 燦坤/燦星 POS 匯出格式：高屏1|027|單號|日期|時間|...|薪號(H)|商品代碼|商品大分類(J)|...|單價(L)|數量(M)|折扣|總價(O)|...|姓名(Q)|...）
+function applyPosPreset(){
+  const colPreset={shin:'H',name:'Q',sales:'O',qty:'M',product:'J'};
+  for(const[k,v]of Object.entries(colPreset)){
+    const el=$('cmap_'+k);
+    if(el&&_excelHeaders.includes(v))el.value=v;
+  }
+  // 略過彙總表用的欄位
+  ['accAmount','iphone','mac','ipad','watch','ac','justCare'].forEach(k=>{
+    const el=$('cmap_'+k);if(el)el.value='';
+  });
+  // 套用精準的 Apple 主商品關鍵字（避開保護貼/殼等配件）
+  const kwPreset={
+    iphone:'iphone 17,iphone 16,iphone 15,iphone 14,iphone 13',
+    mac:'mac mini m4,mac mini m3,imac 24,macbook pro m4,macbook pro m3,macbook air m4,macbook air m3,mac studio m4,mac pro m4',
+    ipad:'ipad pro 11吋,ipad pro 13吋,ipad air 11吋,ipad air 13吋,ipad 11吋,ipad mini 7th',
+    watch:'apple watch series,apple watch ultra',
+    ac:'applecare',
+    justCare:'just care,justcare'
+  };
+  for(const[k,v]of Object.entries(kwPreset)){
+    const el=$('kw_'+k);if(el)el.value=v;
+  }
+  showToast('✅ 已套用 POS 逐筆預設（H薪號/Q姓名/O銷售/M數量/J商品名稱）','ok');
 }
 
 function getColMap(){
