@@ -1264,6 +1264,19 @@ function proceedToColMap(){
   if(!_excelRaw.length){showToast('找不到任何資料列','err');return;}
   buildColMapGrid();
   showExcelStep(2);
+  // 自動偵測 POS 逐筆格式：首列 col 0 含「高屏/北/中/南」+ col 1 是 3 碼店號
+  setTimeout(()=>{
+    if(_excelRaw.length){
+      const r0=_excelRaw[0];
+      const a=String(r0.A||'').trim();
+      const b=String(r0.B||'').trim();
+      const isPos=/[高屏中北南東]/.test(a)&&/^\d{3}/.test(b);
+      const saved=loadColMapSaved();
+      if(isPos&&!Object.keys(saved).length){
+        applyPosPreset();
+      }
+    }
+  },50);
 }
 
 function buildColMapGrid(){
