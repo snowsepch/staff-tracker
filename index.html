@@ -1086,26 +1086,44 @@ function removePhotoStaffRow(btn){
 function savePhotoData(){
   const m=parseInt($('photoMonth').value);
   const rows=document.querySelectorAll('.photo-staff-row');
-  const staffRows=[];
+  const photoRows=[];
   for(const row of rows){
     const name=row.querySelector('.photo-name').value.trim();
     if(!name)continue;
-    staffRows.push({
+    // 空白 → null（保留既有），有輸入 → 數值
+    const getF=(cls)=>{const v=(row.querySelector('.'+cls).value||'').trim();return v===''?null:parseN(v);};
+    photoRows.push({
       name,
-      sales:parseN(row.querySelector('.photo-sales').value),
-      accAmount:parseN(row.querySelector('.photo-accAmount').value),
-      iphone:parseN(row.querySelector('.photo-iphone').value),
-      mac:parseN(row.querySelector('.photo-mac').value),
-      ipad:parseN(row.querySelector('.photo-ipad').value),
-      watch:parseN(row.querySelector('.photo-watch').value),
-      ac:parseN(row.querySelector('.photo-ac').value),
-      justCare:parseN(row.querySelector('.photo-justCare').value)
+      sales:getF('photo-sales'),
+      accAmount:getF('photo-accAmount'),
+      iphone:getF('photo-iphone'),
+      mac:getF('photo-mac'),
+      ipad:getF('photo-ipad'),
+      watch:getF('photo-watch'),
+      ac:getF('photo-ac'),
+      justCare:getF('photo-justCare')
     });
   }
-  if(!staffRows.length){showToast('請至少輸入一位人員資料','err');return;}
+  if(!photoRows.length){showToast('請至少輸入一位人員資料','err');return;}
+  // 合併：照片只覆寫使用者實際填入的欄位，其他保留既有 Excel 資料
+  const existingRows=S.perf?.months?.[m]?.staffRows||[];
+  const photoNames=new Set(photoRows.map(r=>r.name));
+  const FIELDS=['sales','accAmount','iphone','mac','ipad','watch','ac','justCare'];
+  const merged=photoRows.map(pr=>{
+    const ex=existingRows.find(e=>e.name===pr.name);
+    const out=ex?{...ex}:{name:pr.name};
+    if(!ex)FIELDS.forEach(k=>out[k]=0);
+    FIELDS.forEach(k=>{if(pr[k]!=null)out[k]=pr[k];});
+    out.name=pr.name;
+    return out;
+  });
+  // 既有人員若不在這次照片輸入範圍，原樣保留
+  for(const ex of existingRows){
+    if(!photoNames.has(ex.name))merged.push(ex);
+  }
   if(!S.perf)S.perf={months:{}};
   if(!S.perf.months)S.perf.months={};
-  S.perf.months[m]={staffRows};
+  S.perf.months[m]={staffRows:merged};
   savePerf(S.perf);
   renderStages();renderSummary();
   if($('view-stage').classList.contains('v-on')&&currentStage===m){
@@ -1522,9 +1540,24 @@ function saveExcelData(){
     }
     staffRows.push(agg);
   }
+  // 合併：保留既有 AC/JC（POS 算不出來，只能靠照片上傳補），其他欄位以 Excel 為準
+  const existingRows=S.perf?.months?.[m]?.staffRows||[];
+  const newKeys=new Set(staffRows.map(r=>r.shin||r.name));
+  let preserved=0;
+  const merged=staffRows.map(nr=>{
+    const key=nr.shin||nr.name;
+    const ex=existingRows.find(e=>(e.shin||e.name)===key);
+    if(ex&&((ex.ac||0)>0||(ex.justCare||0)>0)){preserved++;return{...nr,ac:ex.ac||0,justCare:ex.justCare||0};}
+    return nr;
+  });
+  // 既有人員若不在這次 Excel 勾選範圍，原樣保留（避免覆寫先前用照片上傳的紀錄）
+  for(const ex of existingRows){
+    const exKey=ex.shin||ex.name;
+    if(!newKeys.has(exKey))merged.push(ex);
+  }
   if(!S.perf)S.perf={months:{}};
   if(!S.perf.months)S.perf.months={};
-  S.perf.months[m]={staffRows};
+  S.perf.months[m]={staffRows:merged};
   savePerf(S.perf);
   renderStages();renderSummary();
   if($('view-stage').classList.contains('v-on')&&currentStage===m){
@@ -1535,7 +1568,8 @@ function saveExcelData(){
     renderStageBody(m,calc,grade);
   }
   closeExcelModal();
-  showToast(`✅ ${MONTHS[m-1]} 業績已匯入（${staffRows.length}人，${isTransactionMode?'逐筆':'彙總'}模式）`,'ok');
+  const preservedTxt=preserved>0?`，保留 ${preserved} 位既有 AC/JC`:'';
+  showToast(`✅ ${MONTHS[m-1]} 業績已匯入（${staffRows.length}人，${isTransactionMode?'逐筆':'彙總'}模式${preservedTxt}）`,'ok');
 }
 
 // ── Target Photo OCR ───────────────────────────────
