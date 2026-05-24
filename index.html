@@ -1357,6 +1357,28 @@ function saveColMapToStorage(map){localStorage.setItem('stk_colmap',JSON.stringi
 function clearColMapSaved(){localStorage.removeItem('stk_colmap');localStorage.removeItem('stk_prodkw');buildColMapGrid();showToast('已清除欄位設定','ok');}
 
 const DEFAULT_KW={iphone:'iphone',mac:'macbook,mac mini,imac,mac pro,mac studio,mac air',ipad:'ipad',watch:'apple watch',ac:'applecare,apple care+,ac+,applecare+',justCare:'just care,justcare'};
+// POS 預設關鍵字（與 applyPosPreset 同步；用來自動遷移舊版本 localStorage）
+const POS_KW_PRESET={
+  iphone:'iphone 17,iphone 16,iphone 15,iphone 14,iphone 13',
+  mac:'MBA M5,MBA M4,MBP M5,MBP M4,Mac mini M4,Mac mini M3,iMac 24,Mac Studio M,Mac Pro M',
+  ipad:'ipad pro 11吋,ipad pro 13吋,ipad air 11吋,ipad air 13吋,ipad 11吋,ipad mini 7th',
+  watch:'AW SE,AW S,AW Ultra,apple watch series,apple watch ultra',
+  ac:'applecare',
+  justCare:'just care,justcare'
+};
+// 自動遷移：偵測 localStorage 還是舊版 POS 預設（無 MBA/AW 縮寫）就自動更新
+(function migrateProdKw(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('stk_prodkw')||'null');
+    if(!saved)return;
+    const macOld=!/MBA M|MBP M/i.test(saved.mac||'');
+    const watchOld=!/AW S|AW U/i.test(saved.watch||'');
+    if(macOld&&watchOld){
+      localStorage.setItem('stk_prodkw',JSON.stringify(POS_KW_PRESET));
+      console.log('[staff-tracker] 已自動更新 POS 商品分類關鍵字至最新版');
+    }
+  }catch(e){}
+})();
 function loadProdKw(){try{return JSON.parse(localStorage.getItem('stk_prodkw')||'null')||DEFAULT_KW}catch{return DEFAULT_KW;}}
 function saveProdKw(){
   const kw={};
@@ -1384,18 +1406,12 @@ function applyPosPreset(){
   ['accAmount','iphone','mac','ipad','watch','ac','justCare'].forEach(k=>{
     const el=$('cmap_'+k);if(el)el.value='';
   });
-  // 套用精準的 Apple 主商品關鍵字（依燦坤 POS 實際品名格式：MBA/MBP 縮寫 + iPhone/iPad 全名 + 吋）
-  const kwPreset={
-    iphone:'iphone 17,iphone 16,iphone 15,iphone 14,iphone 13',
-    mac:'MBA M5,MBA M4,MBP M5,MBP M4,Mac mini M4,Mac mini M3,iMac 24,Mac Studio M,Mac Pro M',
-    ipad:'ipad pro 11吋,ipad pro 13吋,ipad air 11吋,ipad air 13吋,ipad 11吋,ipad mini 7th',
-    watch:'AW SE,AW S,AW Ultra,apple watch series,apple watch ultra',
-    ac:'applecare',
-    justCare:'just care,justcare'
-  };
-  for(const[k,v]of Object.entries(kwPreset)){
+  // 套用精準的 Apple 主商品關鍵字（用全域 POS_KW_PRESET 確保與自動遷移一致）
+  for(const[k,v]of Object.entries(POS_KW_PRESET)){
     const el=$('kw_'+k);if(el)el.value=v;
   }
+  // 立即寫入 localStorage，避免使用者沒走完流程就關閉視窗導致沒儲存
+  localStorage.setItem('stk_prodkw',JSON.stringify(POS_KW_PRESET));
   showToast('✅ 已套用 POS 逐筆預設（P薪號/Q姓名/O銷售/M數量/J商品名稱）','ok');
 }
 
