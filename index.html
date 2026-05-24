@@ -505,7 +505,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
           <div style="font-size:13px;font-weight:700;color:var(--text)">確認欄位對應</div>
           <button class="btn" style="background:var(--purple);color:#fff;font-size:12px;padding:6px 12px;white-space:nowrap" onclick="applyPosPreset()">⚡ 一鍵套用 POS 逐筆預設</button>
         </div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">系統已自動偵測欄位，如有錯誤請手動調整。「（略過）」表示該欄位無資料。POS 逐筆 Excel 可按右上方按鈕套用標準對應（P薪號/Q姓名/O銷售/M數量/J商品名稱）。</p>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">系統已自動偵測欄位，如有錯誤請手動調整。「（略過）」表示該欄位無資料。POS 逐筆 Excel 可按右上方按鈕套用標準對應（P薪號/Q姓名/O銷售/M數量/I商品代碼/J商品名稱）。</p>
         <div class="col-map-grid" id="colMapGrid"></div>
         <!-- 商品分類關鍵字 -->
         <div style="margin-top:14px">
@@ -1158,7 +1158,32 @@ const COL_HINTS={
   justCare:['justcare','just care','justCare','Just Care'],
   qty:['數量','qty','quantity','件數'],
   product:['商品名稱','品名','產品名稱','product','商品','品項'],
+  category:['商品代碼','系列別代號','類別代號','大分類代號'],
 };
+
+// 燦坤 POS 系列別代號 → staff-tracker 分類（用代號分類比商品名稱關鍵字精準）
+const APPLE_MAIN_CAT={
+  iphone:['04060107','04060112','04060113','04060114','04060115','04060116'], // SE/iPhone/mini/Plus/Pro/Pro Max
+  mac:['04060100'],
+  ipad:['04060105','04060117','04060118','04060119','04060120'],               // mini/iPad/10.9吋/Air/Pro
+  watch:['04060200'],
+};
+// Apple 原廠配件代號（含 AirPods）
+const APPLE_ACC_CAT=['04060101','04060104','04060106','04060108','04060111','04060202'];
+function classifyByCat(code){
+  const c=String(code||'').trim();
+  if(!c)return null;
+  for(const[cat,codes]of Object.entries(APPLE_MAIN_CAT)){
+    if(codes.includes(c))return cat;
+  }
+  if(APPLE_ACC_CAT.includes(c))return 'accAmount';
+  // 副廠配件區間 03100000 ~ 03100599
+  if(c.startsWith('0310')){
+    const tail=parseInt(c.slice(4),10);
+    if(!isNaN(tail)&&tail>=0&&tail<=599)return 'accAmount';
+  }
+  return null; // 非 Apple 類別（家電/空調等），不歸入主商品也不歸入配件
+}
 
 // Keywords to categorize products from product-name column
 const PROD_KW={
@@ -1305,7 +1330,8 @@ function buildColMapGrid(){
     {key:'name',lbl:'姓名'},
     {key:'sales',lbl:'銷售金額欄'},
     {key:'qty', lbl:'數量欄（逐筆）'},
-    {key:'product',lbl:'商品名稱欄（逐筆分類）'},
+    {key:'category',lbl:'商品代碼欄（逐筆，最準）'},
+    {key:'product',lbl:'商品名稱欄（逐筆，無代號才用）'},
     {key:'accAmount',lbl:'配件金額（彙總表）'},
     {key:'iphone',lbl:'iPhone台數（彙總表）'},
     {key:'mac',lbl:'Mac台數（彙總表）'},
@@ -1325,7 +1351,13 @@ function buildColMapGrid(){
     // Priority: saved > auto-detect
     const sv=saved[key];
     if(sv&&_excelHeaders.includes(sv))return sv;
-    return autoDetectCol(_excelHeaders,COL_HINTS[key]||[]);
+    const auto=autoDetectCol(_excelHeaders,COL_HINTS[key]||[]);
+    if(auto)return auto;
+    // 特殊：商品代碼 = 8 位數字（POS 系列別代號格式 0xxxxxxx）
+    if(key==='category'){
+      return _excelHeaders.find(c=>/^\d{8}$/.test(_excelSamples[c]||''))||'';
+    }
+    return '';
   }
   const hasSaved=Object.keys(saved).length>0;
   const grid=$('colMapGrid');
@@ -1342,7 +1374,7 @@ function buildColMapGrid(){
       const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===sel?' selected':''}>${colLabel(h)}</option>`).join('');
       return `<span class="col-map-lbl">${f.lbl}</span><select class="inp-f" id="cmap_${f.key}" style="font-size:12px">${opts}</select>`;
     }).join('')
-    +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin:4px 0;font-size:11px">── 商品分類（逐筆模式：選商品名稱欄；彙總模式：選各台數欄）──</span><span></span>`
+    +`<span class="col-map-lbl" style="grid-column:1/-1;color:var(--purple);border-bottom:1px solid var(--border);padding-bottom:4px;margin:4px 0;font-size:11px">── 商品分類（逐筆模式：建議選商品代碼欄最準；彙總模式：選各台數欄）──</span><span></span>`
     +fields.slice(4).map(f=>{
       const sel=selectVal(f.key);
       const opts=`<option value="">（略過）</option>`+_excelHeaders.map(h=>`<option value="${h}"${h===sel?' selected':''}>${colLabel(h)}</option>`).join('');
@@ -1397,7 +1429,7 @@ function fillKwInputs(){
 
 // POS 逐筆 Excel 預設（依 燦坤/燦星 POS 匯出格式：高屏1|027|單號|日期|時間|...|客戶會員(H)|商品代碼|商品大分類(J)|...|單價(L)|數量(M)|折扣|總價(O)|薪號(P)|姓名(Q)|...）
 function applyPosPreset(){
-  const colPreset={shin:'P',name:'Q',sales:'O',qty:'M',product:'J'};
+  const colPreset={shin:'P',name:'Q',sales:'O',qty:'M',product:'J',category:'I'};
   for(const[k,v]of Object.entries(colPreset)){
     const el=$('cmap_'+k);
     if(el&&_excelHeaders.includes(v))el.value=v;
@@ -1412,11 +1444,11 @@ function applyPosPreset(){
   }
   // 立即寫入 localStorage，避免使用者沒走完流程就關閉視窗導致沒儲存
   localStorage.setItem('stk_prodkw',JSON.stringify(POS_KW_PRESET));
-  showToast('✅ 已套用 POS 逐筆預設（P薪號/Q姓名/O銷售/M數量/J商品名稱）','ok');
+  showToast('✅ 已套用 POS 逐筆預設（P薪號/Q姓名/O銷售/M數量/I商品代碼/J商品名稱）','ok');
 }
 
 function getColMap(){
-  const keys=['shin','name','sales','qty','product','accAmount','iphone','mac','ipad','watch','ac','justCare'];
+  const keys=['shin','name','sales','qty','category','product','accAmount','iphone','mac','ipad','watch','ac','justCare'];
   const map={};
   keys.forEach(k=>{const el=$('cmap_'+k);map[k]=el&&el.value?el.value:'';});
   return map;
@@ -1506,7 +1538,7 @@ function saveExcelData(){
   const checked=[...document.querySelectorAll('.staff-chk:checked')].map(cb=>cb.value);
   if(!checked.length){showToast('請至少選擇一位人員','err');return;}
 
-  const isTransactionMode=!!map.product; // 逐筆模式：有商品名稱欄
+  const isTransactionMode=!!(map.product||map.category); // 逐筆模式：有商品名稱或商品代碼
   const staffRows=[];
 
   for(const key of checked){
@@ -1518,28 +1550,39 @@ function saveExcelData(){
     };
 
     if(isTransactionMode){
-      // 逐筆交易模式：按商品名稱關鍵字分類（使用使用者設定的關鍵字）
+      // 逐筆交易模式：優先用商品代碼分類（精準），無代號才 fallback 關鍵字
       const kw=loadProdKw();
-      // 建立 {cat: [keyword array]} 結構
       const kwMap={};
       Object.entries(kw).forEach(([cat,str])=>{
         kwMap[cat]=str.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
       });
       for(const row of s.rows){
-        const pname=(row[map.product]||'').toLowerCase();
         // 數量保留正負號：退貨(-1)要扣回；空值才預設為1
         const rawQty=map.qty?row[map.qty]:'';
         const qty=!map.qty?1:(String(rawQty??'').trim()===''?1:parseN(rawQty));
         const amt=map.sales?parseN(row[map.sales]):0;
         agg.sales+=amt;
         let matched=false;
-        for(const[cat,kws]of Object.entries(kwMap)){
-          if(kws.some(kw=>pname.includes(kw))){
-            agg[cat]+=qty;
-            matched=true;break;
-          }
+        // 1) 商品代碼分類（最準）
+        if(map.category){
+          const code=String(row[map.category]||'').trim();
+          const cat=classifyByCat(code);
+          if(cat==='accAmount'){agg.accAmount+=amt;matched=true;}
+          else if(cat){agg[cat]+=qty;matched=true;}
+          // 代號模式：classifyByCat 為 null → 非 Apple 類別（家電/空調等），不歸入配件，只算入 sales
+          else if(code){matched=true;} // 標記已處理（避免關鍵字 fallback）
         }
-        if(!matched){agg.accAmount+=amt;} // 未匹配到主商品→視為配件金額
+        // 2) 關鍵字 fallback（沒設代號欄或代號空白）
+        if(!matched&&map.product){
+          const pname=(row[map.product]||'').toLowerCase();
+          for(const[cat,kws]of Object.entries(kwMap)){
+            if(kws.some(kw=>pname.includes(kw))){
+              agg[cat]+=qty;
+              matched=true;break;
+            }
+          }
+          if(!matched){agg.accAmount+=amt;matched=true;}
+        }
       }
     }else{
       // 彙總表模式：每列直接讀取各欄數值
