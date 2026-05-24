@@ -1366,12 +1366,12 @@ function applyPosPreset(){
   ['accAmount','iphone','mac','ipad','watch','ac','justCare'].forEach(k=>{
     const el=$('cmap_'+k);if(el)el.value='';
   });
-  // 套用精準的 Apple 主商品關鍵字（避開保護貼/殼等配件）
+  // 套用精準的 Apple 主商品關鍵字（依燦坤 POS 實際品名格式：MBA/MBP 縮寫 + iPhone/iPad 全名 + 吋）
   const kwPreset={
     iphone:'iphone 17,iphone 16,iphone 15,iphone 14,iphone 13',
-    mac:'mac mini m4,mac mini m3,imac 24,macbook pro m4,macbook pro m3,macbook air m4,macbook air m3,mac studio m4,mac pro m4',
+    mac:'MBA M5,MBA M4,MBP M5,MBP M4,Mac mini M4,Mac mini M3,iMac 24,Mac Studio M,Mac Pro M',
     ipad:'ipad pro 11吋,ipad pro 13吋,ipad air 11吋,ipad air 13吋,ipad 11吋,ipad mini 7th',
-    watch:'apple watch series,apple watch ultra',
+    watch:'AW SE,AW S,AW Ultra,apple watch series,apple watch ultra',
     ac:'applecare',
     justCare:'just care,justcare'
   };
@@ -1493,7 +1493,9 @@ function saveExcelData(){
       });
       for(const row of s.rows){
         const pname=(row[map.product]||'').toLowerCase();
-        const qty=map.qty?Math.max(parseN(row[map.qty]),1):1;
+        // 數量保留正負號：退貨(-1)要扣回；空值才預設為1
+        const rawQty=map.qty?row[map.qty]:'';
+        const qty=!map.qty?1:(String(rawQty??'').trim()===''?1:parseN(rawQty));
         const amt=map.sales?parseN(row[map.sales]):0;
         agg.sales+=amt;
         let matched=false;
