@@ -128,7 +128,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 
 .pcard-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;}
 .char-wrap{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;}
-.char-pixel{width:64px;height:72px;display:block;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
+.char-pixel{width:64px;height:auto;display:block;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));animation:char-bob 1.6s ease-in-out infinite;}
+@keyframes char-bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-2px);}}
 .p1 .char-pixel{color:var(--p1a);}
 .p2 .char-pixel{color:var(--p2a);}
 .p1 .char-pixel .px-dark{fill:var(--p1c);}
@@ -617,9 +618,9 @@ const GRADE={
   bg:{s:'linear-gradient(135deg,#F59E0B,#D97706)',a:'linear-gradient(135deg,#10B981,#059669)',b:'linear-gradient(135deg,#3B82F6,#2563EB)',c:'linear-gradient(135deg,#F97316,#EA580C)',d:'linear-gradient(135deg,#EF4444,#DC2626)',active:'linear-gradient(135deg,#F97316,#EA580C)',locked:'linear-gradient(135deg,#94A3B8,#64748B)'},
 };
 const PLAYER_TYPE=['p1','p2'];
-const PLAYER_LABEL=['⚔️ 戰士','🔮 法師'];
+const PLAYER_LABEL=['✨ 小精靈','🔮 法師'];
 // 點陣風格角色 SVG（使用 currentColor 套用主色，px-dark class 套深色變體）
-const SPRITE_WARRIOR=`<svg class="char-pixel" viewBox="0 0 16 18" shape-rendering="crispEdges"><g fill="currentColor"><rect x="7" y="0" width="2" height="1"/><rect x="6" y="1" width="4" height="1"/><rect x="5" y="2" width="6" height="2"/><rect x="4" y="4" width="1" height="3"/><rect x="11" y="4" width="1" height="3"/><rect x="5" y="6" width="6" height="1"/><rect x="2" y="7" width="3" height="2"/><rect x="11" y="7" width="3" height="2"/><rect x="6" y="7" width="4" height="5"/><rect x="3" y="9" width="2" height="3"/><rect x="11" y="9" width="2" height="3"/><rect x="5" y="12" width="6" height="2"/><rect x="5" y="14" width="2" height="3"/><rect x="9" y="14" width="2" height="3"/></g><rect x="5" y="4" width="6" height="2" fill="#1e293b"/><rect x="6" y="5" width="1" height="1" fill="#fff"/><rect x="9" y="5" width="1" height="1" fill="#fff"/><rect x="7" y="9" width="2" height="3" class="px-dark"/><rect x="6" y="10" width="4" height="1" class="px-dark"/><rect x="5" y="13" width="6" height="1" class="px-dark"/><rect x="4" y="17" width="3" height="1" fill="#1e293b"/><rect x="9" y="17" width="3" height="1" fill="#1e293b"/><rect x="14" y="2" width="1" height="6" fill="#e2e8f0"/><rect x="14" y="8" width="1" height="1" fill="#cbd5e1"/><rect x="13" y="9" width="3" height="1" fill="#fbbf24"/><rect x="14" y="10" width="1" height="2" fill="#92400e"/></svg>`;
+const SPRITE_WARRIOR=`<svg class="char-pixel" viewBox="0 0 16 14" shape-rendering="crispEdges"><g fill="currentColor"><rect x="3" y="0" width="2" height="1"/><rect x="11" y="0" width="2" height="1"/><rect x="2" y="1" width="4" height="1"/><rect x="10" y="1" width="4" height="1"/><rect x="3" y="2" width="10" height="1"/><rect x="2" y="3" width="12" height="1"/><rect x="1" y="4" width="14" height="4"/><rect x="2" y="8" width="12" height="1"/><rect x="3" y="9" width="10" height="1"/><rect x="4" y="10" width="3" height="2"/><rect x="9" y="10" width="3" height="2"/></g><rect x="4" y="5" width="2" height="2" fill="#fff"/><rect x="10" y="5" width="2" height="2" fill="#fff"/><rect x="5" y="5" width="1" height="2" fill="#1e293b"/><rect x="10" y="5" width="1" height="2" fill="#1e293b"/><rect x="5" y="5" width="1" height="1" fill="#fff"/><rect x="10" y="5" width="1" height="1" fill="#fff"/><rect x="1" y="6" width="1" height="1" fill="#fda4af"/><rect x="14" y="6" width="1" height="1" fill="#fda4af"/><rect x="7" y="7" width="2" height="1" fill="#1e293b"/><rect x="6" y="8" width="1" height="1" fill="#1e293b"/><rect x="9" y="8" width="1" height="1" fill="#1e293b"/><rect x="4" y="12" width="3" height="2" fill="#1e293b"/><rect x="9" y="12" width="3" height="2" fill="#1e293b"/></svg>`;
 const SPRITE_MAGE=`<svg class="char-pixel" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="currentColor"><rect x="7" y="0" width="2" height="1"/><rect x="6" y="1" width="3" height="1"/><rect x="5" y="2" width="5" height="1"/><rect x="3" y="3" width="9" height="1"/><rect x="3" y="6" width="9" height="3"/><rect x="2" y="9" width="11" height="4"/></g><rect x="7" y="2" width="2" height="1" fill="#fbbf24"/><rect x="4" y="4" width="7" height="2" fill="#fde7c8"/><rect x="5" y="5" width="1" height="1" fill="#1e293b"/><rect x="9" y="5" width="1" height="1" fill="#1e293b"/><rect x="5" y="8" width="1" height="1" fill="#fbbf24"/><rect x="9" y="10" width="1" height="1" fill="#fbbf24"/><rect x="7" y="11" width="1" height="1" fill="#fbbf24"/><rect x="2" y="13" width="11" height="1" class="px-dark"/><rect x="4" y="14" width="3" height="2" fill="#1e293b"/><rect x="9" y="14" width="3" height="2" fill="#1e293b"/><rect x="13" y="3" width="1" height="11" fill="#92400e"/><rect x="12" y="0" width="3" height="3" fill="#fbbf24"/><rect x="13" y="1" width="1" height="1" fill="#fff"/></svg>`;
 
 // ── State ─────────────────────────────────────────
@@ -891,7 +892,7 @@ function renderStageBody(m,calc,grade){
     });
     html+=`</div></div>`;
   } else {
-    const idleChars=[{type:'p1',icon:'⚔️',lbl:'戰士'},{type:'p2',icon:'🔮',lbl:'法師'}];
+    const idleChars=[{type:'p1',icon:'✨',lbl:'小精靈'},{type:'p2',icon:'🔮',lbl:'法師'}];
     let idleHtml=`<div class="sv-sec"><div class="sv-sec-title">🎮 玩家個人進度</div><div class="players-grid">`;
     idleChars.forEach(c=>{
       idleHtml+=`
