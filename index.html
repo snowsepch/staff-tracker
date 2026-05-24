@@ -128,24 +128,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Di
 
 .pcard-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;}
 .char-wrap{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;}
-.char-hat{width:0;height:0;margin-bottom:-1px;}
-.p1 .char-hat{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid var(--p1b);}
-.p2 .char-hat{width:20px;height:12px;background:var(--p2b);border-radius:50% 50% 0 0;}
-.char-head{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15);position:relative;flex-shrink:0;}
-.p1 .char-head{background:linear-gradient(145deg,var(--p1b),var(--p1a));}
-.p2 .char-head{background:linear-gradient(145deg,var(--p2b),var(--p2a));}
-.char-head::after{content:'';position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:10px;height:3px;background:rgba(255,255,255,.6);border-radius:2px;}
-.char-body{width:28px;height:22px;border-radius:6px 6px 3px 3px;position:relative;margin-top:2px;}
-.p1 .char-body{background:var(--p1a);}
-.p2 .char-body{background:var(--p2a);}
-.char-arms{display:flex;gap:2px;margin-top:1px;}
-.char-arm{width:8px;height:14px;border-radius:4px;}
-.p1 .char-arm{background:var(--p1a);}
-.p2 .char-arm{background:var(--p2a);}
-.char-legs{display:flex;gap:4px;margin-top:2px;}
-.char-leg{width:10px;height:16px;border-radius:0 0 5px 5px;}
-.p1 .char-leg{background:var(--p1c);}
-.p2 .char-leg{background:var(--p2c);}
+.char-pixel{width:64px;height:72px;display:block;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
+.p1 .char-pixel{color:var(--p1a);}
+.p2 .char-pixel{color:var(--p2a);}
+.p1 .char-pixel .px-dark{fill:var(--p1c);}
+.p2 .char-pixel .px-dark{fill:var(--p2c);}
 .char-type{font-size:10px;font-weight:800;margin-top:5px;text-align:center;}
 .p1 .char-type{color:var(--p1a);}
 .p2 .char-type{color:var(--p2a);}
@@ -631,6 +618,9 @@ const GRADE={
 };
 const PLAYER_TYPE=['p1','p2'];
 const PLAYER_LABEL=['⚔️ 戰士','🔮 法師'];
+// 點陣風格角色 SVG（使用 currentColor 套用主色，px-dark class 套深色變體）
+const SPRITE_WARRIOR=`<svg class="char-pixel" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="currentColor"><rect x="3" y="0" width="9" height="1"/><rect x="2" y="1" width="11" height="1"/><rect x="2" y="4" width="11" height="1"/><rect x="1" y="5" width="13" height="2"/><rect x="2" y="7" width="11" height="2"/><rect x="3" y="10" width="3" height="4"/><rect x="9" y="10" width="3" height="4"/></g><rect x="2" y="2" width="11" height="2" fill="#1e293b"/><rect x="5" y="2" width="1" height="2" fill="#fff"/><rect x="10" y="2" width="1" height="2" fill="#fff"/><rect x="2" y="9" width="11" height="1" class="px-dark"/><rect x="6" y="7" width="3" height="2" class="px-dark"/><rect x="2" y="14" width="5" height="2" fill="#1e293b"/><rect x="9" y="14" width="5" height="2" fill="#1e293b"/><rect x="13" y="0" width="1" height="6" fill="#cbd5e1"/><rect x="12" y="6" width="3" height="1" fill="#fbbf24"/><rect x="13" y="7" width="1" height="2" fill="#92400e"/></svg>`;
+const SPRITE_MAGE=`<svg class="char-pixel" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="currentColor"><rect x="7" y="0" width="2" height="1"/><rect x="6" y="1" width="3" height="1"/><rect x="5" y="2" width="5" height="1"/><rect x="3" y="3" width="9" height="1"/><rect x="3" y="6" width="9" height="3"/><rect x="2" y="9" width="11" height="4"/></g><rect x="7" y="2" width="2" height="1" fill="#fbbf24"/><rect x="4" y="4" width="7" height="2" fill="#fde7c8"/><rect x="5" y="5" width="1" height="1" fill="#1e293b"/><rect x="9" y="5" width="1" height="1" fill="#1e293b"/><rect x="5" y="8" width="1" height="1" fill="#fbbf24"/><rect x="9" y="10" width="1" height="1" fill="#fbbf24"/><rect x="7" y="11" width="1" height="1" fill="#fbbf24"/><rect x="2" y="13" width="11" height="1" class="px-dark"/><rect x="4" y="14" width="3" height="2" fill="#1e293b"/><rect x="9" y="14" width="3" height="2" fill="#1e293b"/><rect x="13" y="3" width="1" height="11" fill="#92400e"/><rect x="12" y="0" width="3" height="3" fill="#fbbf24"/><rect x="13" y="1" width="1" height="1" fill="#fff"/></svg>`;
 
 // ── State ─────────────────────────────────────────
 const S={year:new Date().getFullYear(),perf:null};
@@ -852,11 +842,7 @@ function renderStageBody(m,calc,grade){
           <div class="pcard-top">
             <div class="char-wrap">
               <div class="speech-bubble">${dialogue}</div>
-              <div class="char-hat"></div>
-              <div class="char-head">${initial}</div>
-              <div class="char-body"></div>
-              <div class="char-arms"><div class="char-arm"></div><div class="char-arm"></div></div>
-              <div class="char-legs"><div class="char-leg"></div><div class="char-leg"></div></div>
+              ${ptype==='p1'?SPRITE_WARRIOR:SPRITE_MAGE}
               <div class="char-type">${plbl}</div>
             </div>
             <div class="pcard-info">
